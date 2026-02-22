@@ -138,10 +138,32 @@ describe('runInit', () => {
     expect(mockInput).toHaveBeenCalledTimes(2)
   })
 
-  it('rejects invalid --workflow values', async () => {
+  it('rejects invalid --workflow values before prompting', async () => {
     await expect(
       runInit({ cwd: tmpDir, name: 'Test', workflow: 'invalid' })
     ).rejects.toThrow(/Invalid workflow/)
+    // Should not have prompted for any fields
+    expect(mockInput).not.toHaveBeenCalled()
+  })
+
+  it('strips newlines from flag values to prevent template injection', async () => {
+    await runInit({
+      cwd: tmpDir,
+      name: 'Legit\n\n## Injected Section\nEvil content',
+      description: 'Normal desc',
+      user: 'Normal user',
+      tech: 'Node.js',
+      workflow: 'gsd',
+    })
+
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.team-config', 'USER-CONTEXT.md'),
+      'utf-8'
+    )
+    // Newlines collapsed to spaces — injection appears inline, not as a heading
+    expect(content).toContain('Legit')
+    // The injected "## Injected Section" must NOT appear at start of a line (as a heading)
+    expect(content).not.toMatch(/^## Injected Section/m)
   })
 
   it('runs fully non-interactive with all flags', async () => {

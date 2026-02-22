@@ -76,6 +76,20 @@ describe('runFeedback', () => {
     expect(content).not.toContain('###AlsoNoSpace')
   })
 
+  it('normalizes CRLF line endings before stripping headings', () => {
+    runFeedback('## Heading\r\nContent\r\n### Another\r\nMore', tmpDir)
+
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.team-config', 'human-inbox.md'),
+      'utf-8'
+    )
+    expect(content).not.toContain('## Heading')
+    expect(content).not.toContain('### Another')
+    expect(content).toContain('Heading')
+    expect(content).toContain('Content')
+    expect(content).not.toContain('\r')
+  })
+
   it('throws friendly error when inbox file is not writable', () => {
     fs.chmodSync(path.join(tmpDir, '.team-config', 'human-inbox.md'), 0o000)
     expect(() => runFeedback('test', tmpDir)).toThrow(/Failed to write/)

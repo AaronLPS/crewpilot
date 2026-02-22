@@ -19,7 +19,8 @@ export function runFeedback(message: string, cwd?: string): void {
     throw new Error(`Feedback message too long (${message.length} chars). Maximum is ${MAX_FEEDBACK_LENGTH}.`)
   }
 
-  const sanitized = message.replace(/^#{1,6}\s*/gm, '')
+  const normalized = message.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const sanitized = normalized.replace(/^#{1,6}\s*/gm, '')
 
   const inboxPath = path.join(dir, '.team-config', 'human-inbox.md')
   const entry = `\n## [${formatTimestamp()}]\n${sanitized}\n`

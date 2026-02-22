@@ -16,8 +16,17 @@ interface InitOptions {
   existing?: boolean
 }
 
+function sanitizeField(value: string): string {
+  return value.replace(/[\r\n]+/g, ' ').trim()
+}
+
 export async function runInit(options: InitOptions = {}): Promise<void> {
   const cwd = options.cwd ?? process.cwd()
+
+  const VALID_WORKFLOWS = ['gsd', 'superpowers', 'ask-me-later']
+  if (options.workflow && !VALID_WORKFLOWS.includes(options.workflow)) {
+    throw new Error(`Invalid workflow: "${options.workflow}". Must be one of: ${VALID_WORKFLOWS.join(', ')}`)
+  }
 
   if (options.existing) {
     checkPrereqs(['claude'])
@@ -34,27 +43,22 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     }
   }
 
-  const projectName = options.name ?? await input({
+  const projectName = sanitizeField(options.name ?? await input({
     message: 'Project name',
     default: path.basename(cwd),
-  })
+  }))
 
-  const description = options.description ?? await input({
+  const description = sanitizeField(options.description ?? await input({
     message: 'Project description',
-  })
+  }))
 
-  const userDescription = options.user ?? await input({
+  const userDescription = sanitizeField(options.user ?? await input({
     message: 'Target user description (who is this for?)',
-  })
+  }))
 
-  const techStack = options.tech ?? await input({
+  const techStack = sanitizeField(options.tech ?? await input({
     message: 'Tech stack / constraints',
-  })
-
-  const VALID_WORKFLOWS = ['gsd', 'superpowers', 'ask-me-later']
-  if (options.workflow && !VALID_WORKFLOWS.includes(options.workflow)) {
-    throw new Error(`Invalid workflow: "${options.workflow}". Must be one of: ${VALID_WORKFLOWS.join(', ')}`)
-  }
+  }))
 
   const workflow = options.workflow ?? await select({
     message: 'Preferred workflow',

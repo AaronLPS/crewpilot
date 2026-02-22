@@ -70,7 +70,11 @@ export async function runStart(options: StartOptions = {}): Promise<void> {
   }
 
   console.log(chalk.blue(`Creating tmux session: ${sessionName}`))
-  createSession(sessionName, cwd)
+  try {
+    createSession(sessionName, cwd)
+  } catch {
+    throw new Error(`Failed to create tmux session. Check that tmux is running and no duplicate session exists.`)
+  }
 
   sendKeys(`${sessionName}:0`, `claude --dangerously-skip-permissions`)
   sendEnter(`${sessionName}:0`)

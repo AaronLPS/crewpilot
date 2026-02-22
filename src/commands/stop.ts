@@ -47,9 +47,11 @@ export function runStop(cwd?: string): void {
     const runnerPanePath = path.join(dir, '.team-config', 'runner-pane-id.txt')
     const runnerPaneContent = fs.readFileSync(runnerPanePath, 'utf-8').trim()
     const MAX_RUNNER_PANES = 32
-    runnerPaneIds = runnerPaneContent
-      ? runnerPaneContent.split('\n').filter(Boolean).slice(0, MAX_RUNNER_PANES)
-      : []
+    const allIds = runnerPaneContent ? runnerPaneContent.split('\n').filter(Boolean) : []
+    if (allIds.length > MAX_RUNNER_PANES) {
+      console.warn(chalk.yellow(`runner-pane-id.txt has ${allIds.length} entries; only first ${MAX_RUNNER_PANES} will receive graceful shutdown`))
+    }
+    runnerPaneIds = allIds.slice(0, MAX_RUNNER_PANES)
   } catch {
     // runner-pane-id.txt missing — no runners to stop
   }

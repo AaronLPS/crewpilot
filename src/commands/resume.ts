@@ -68,7 +68,14 @@ export async function runResume(options: ResumeOptions = {}): Promise<void> {
   }
 
   console.log(chalk.blue(`Creating new session: ${sessionName}`))
-  createSession(sessionName, cwd)
+  try {
+    createSession(sessionName, cwd)
+  } catch {
+    throw new Error(
+      `Failed to create session "${sessionName}". ` +
+      `If a session already exists, run ${chalk.cyan('crewpilot stop')} first.`
+    )
+  }
 
   const claudeCmd = options.fresh
     ? 'claude --dangerously-skip-permissions'
