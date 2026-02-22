@@ -105,22 +105,22 @@ The `--existing` flag scans your codebase with Claude Code and writes an archite
 
 ### Existing GSD project
 
-If your project already has `.planning/STATE.md` from a previous GSD session, the Team Lead automatically detects it at startup. Instead of launching `/gsd:new-project`, it reads your GSD state and routes to the right resume command:
+If your project already has `.planning/STATE.md` from a previous GSD session, the Team Lead detects it at startup. It reads your GSD state, summarizes what it found (current phase, progress, remaining work), and asks you what to do:
 
-| Project state | Command used |
+| Option | GSD command |
 |---|---|
-| Phase in progress | `/gsd:resume-work` |
-| Phase done, more phases remain | `/gsd:progress` |
-| All milestone phases completed | `/gsd:new-milestone` |
-| State unclear | `/gsd:progress` (safe default) |
+| Resume where you left off | `/gsd:resume-work` |
+| Review roadmap and reprioritize | `/gsd:progress` |
+| Start a new milestone with different goals | `/gsd:new-milestone` |
+| Insert urgent work before the next phase | `/gsd:insert-phase` |
+| Ignore existing state and start fresh | `/gsd:new-project` |
+| Switch to Superpowers workflow instead | `/superpowers:brainstorming` |
 
 ```bash
 cd /path/to/your/gsd-project
 crewpilot init --existing --workflow gsd
 crewpilot start
 ```
-
-No manual intervention needed — the Team Lead picks up where GSD left off.
 
 ## Commands
 

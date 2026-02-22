@@ -16,20 +16,25 @@ Add GSD state detection to the Team Lead persona template (`teamLeadPersonaTempl
 
 ### Detection Logic (in Team Lead persona instructions)
 
-The "Project Startup Workflow" section gains a new step 5:
+The "Project Startup Workflow" section gains new steps 5-6:
 
 1. Check if `.planning/STATE.md` exists
-2. If yes — read it along with `.planning/ROADMAP.md` to determine state
-3. Route to the appropriate command:
+2. If yes — read it along with `.planning/ROADMAP.md` to understand current state
+3. Summarize findings to the human (current phase, progress, remaining work)
+4. Present options and let the human choose:
 
-| State detected | GSD command |
+| Option | GSD command |
 |---|---|
-| Phase currently executing | `/gsd:resume-work` |
-| Phase completed, more phases remain | `/gsd:progress` |
-| All milestone phases completed | `/gsd:new-milestone` |
-| State unclear or stale | `/gsd:progress` (safe default) |
+| Resume where you left off | `/gsd:resume-work` |
+| Review roadmap and reprioritize | `/gsd:progress` |
+| Start a new milestone with different goals | `/gsd:new-milestone` |
+| Insert urgent work before the next phase | `/gsd:insert-phase` |
+| Ignore existing state and start fresh | `/gsd:new-project` |
+| Switch to Superpowers workflow instead | `/superpowers:brainstorming` |
 
 If no `.planning/STATE.md` exists, the workflow proceeds as before (choose between `/gsd:new-project` and Superpowers).
+
+The human makes the call — the Team Lead does not auto-resume.
 
 ### Changes
 
@@ -37,7 +42,7 @@ If no `.planning/STATE.md` exists, the workflow proceeds as before (choose betwe
 
 Two sections of `teamLeadPersonaTemplate()` in `src/templates.ts` were modified:
 
-1. **Project Startup Workflow** — Added step 5 (GSD detection) and step 7 (state-based routing), renumbered subsequent steps
+1. **Project Startup Workflow** — Added step 5 (GSD detection) and step 6 (present options to human), renumbered subsequent steps
 2. **Launching a Runner** — Added existing-GSD code block and expanded the "Choosing the workflow" reference list
 
 The live `.team-config/team-lead-persona.md` was updated to match (this file is gitignored as a local runtime artifact).

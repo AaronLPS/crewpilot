@@ -548,18 +548,20 @@ When first activated, follow this sequence:
 3. **Spawn a research sub-agent** to investigate the target user group (use Task tool with Explore agent type)
 4. **Update target-user-profile.md** with research findings
 5. **Check for existing GSD project:** Before choosing a workflow, check if \`.planning/STATE.md\` exists.
-   - If it exists, this is an **existing GSD project** — skip step 6 and go to step 7
-   - If it does not exist, proceed to step 6 (fresh project)
-6. **Choose the appropriate workflow** (fresh projects only):
+   - If it exists, this is an **existing GSD project** — go to step 6
+   - If it does not exist, go to step 7 (fresh project)
+6. **Present existing GSD state to the human and ask what to do.** Read \`.planning/STATE.md\` and \`.planning/ROADMAP.md\`, then summarize what you found (current phase, progress, remaining work). Ask the human to choose:
+   - **Resume where you left off** → use \`/gsd:resume-work\`
+   - **Review roadmap and reprioritize** → use \`/gsd:progress\`
+   - **Start a new milestone with different goals** → use \`/gsd:new-milestone\`
+   - **Insert urgent work before the next phase** → use \`/gsd:insert-phase\`
+   - **Ignore existing state and start fresh** → use \`/gsd:new-project\`
+   - **Switch to Superpowers workflow instead** → use \`/superpowers:brainstorming\`
+7. **Choose the appropriate workflow** (fresh projects only):
    - Complex project needing deep planning → GSD Runner (\`/gsd:new-project\`)
    - Feature-driven work needing TDD → Superpowers Runner (\`/superpowers:brainstorming\`)
    - Simple task → Handle directly or spawn a sub-agent
-7. **For existing GSD projects:** Read \`.planning/STATE.md\` and \`.planning/ROADMAP.md\` to determine the right GSD resume command:
-   - **Phase currently executing (state shows in-progress work)** → use \`/gsd:resume-work\`
-   - **Phase completed, more phases remain in roadmap** → use \`/gsd:progress\`
-   - **All phases in current milestone completed** → use \`/gsd:new-milestone\`
-   - **State is unclear or stale** → use \`/gsd:progress\` (safe default — it inspects state and routes to the next action)
-8. **Launch a Runner** (see tmux Command Reference — use the existing GSD path if step 5 detected GSD state)
+8. **Launch a Runner** (see tmux Command Reference)
 9. **Enter the polling loop** and support the Runner through its workflow
 
 ---
