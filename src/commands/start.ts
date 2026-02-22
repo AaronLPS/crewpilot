@@ -1,0 +1,75 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import chalk from 'chalk'
+import { confirm } from '@inquirer/prompts'
+import { checkPrereqs } from '../prereqs.js'
+import { teamConfigExists } from '../scaffold.js'
+import { getProjectName, getSessionName } from '../utils.js'
+import {
+  sessionExists,
+  createSession,
+  sendKeys,
+  sendEnter,
+  sendTextInput,
+  attachSession,
+  sleepMs,
+} from '../tmux.js'
+
+const BOOTSTRAP_PROMPT = `Read .team-config/team-lead-persona.md, then .team-config/target-user-profile.md, then .team-config/USER-CONTEXT.md. You are the Team Lead. Begin the startup workflow as described in your persona.`
+
+interface StartOptions {
+  cwd?: string
+  noAttach?: boolean
+}
+
+export async function runStart(options: StartOptions = {}): Promise<void> {
+  const cwd = options.cwd ?? process.cwd()
+
+  checkPrereqs(['tmux', 'claude'])
+
+  if (!teamConfigExists(cwd)) {
+    throw new Error(
+      `No .team-config/ found. Run ${chalk.cyan('crewpilot init')} first.`
+    )
+  }
+
+  const userContextPath = path.join(cwd, '.team-config', 'USER-CONTEXT.md')
+  const userContext = fs.readFileSync(userContextPath, 'utf-8')
+  const projectName = getProjectName(userContext) ?? path.basename(cwd)
+  const sessionName = getSessionName(projectName)
+
+  if (sessionExists(sessionName)) {
+    const action = await confirm({
+      message: `Session "${sessionName}" already exists. Attach to it?`,
+      default: true,
+    })
+    if (action) {
+      attachSession(sessionName)
+      return
+    }
+    console.log(chalk.yellow(`Use ${chalk.cyan('crewpilot stop')} first to stop the existing session.`))
+    return
+  }
+
+  console.log(chalk.blue(`Creating tmux session: ${sessionName}`))
+  createSession(sessionName, cwd)
+
+  sendKeys(`${sessionName}:0`, `claude --dangerously-skip-permissions`)
+  sendEnter(`${sessionName}:0`)
+  sleepMs(4000)
+
+  sendTextInput(`${sessionName}:0`, BOOTSTRAP_PROMPT)
+
+  console.log(chalk.green(`\nCrewpilot started! Session: ${sessionName}`))
+  console.log('')
+  console.log(chalk.gray('How to interact:'))
+  console.log(chalk.gray(`  Attach:   tmux attach -t ${sessionName}`))
+  console.log(chalk.gray(`  Feedback: crewpilot feedback "your message"`))
+  console.log(chalk.gray(`  Status:   crewpilot status`))
+  console.log(chalk.gray(`  Stop:     crewpilot stop`))
+
+  if (!options.noAttach) {
+    console.log(chalk.blue('\nAttaching to session...'))
+    attachSession(sessionName)
+  }
+}
