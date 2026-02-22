@@ -19,12 +19,16 @@ export function runFeedback(message: string, cwd?: string): void {
     throw new Error(`Feedback message too long (${message.length} chars). Maximum is ${MAX_FEEDBACK_LENGTH}.`)
   }
 
-  const sanitized = message.replace(/^##+ /gm, '')
+  const sanitized = message.replace(/^#{1,6}\s*/gm, '')
 
   const inboxPath = path.join(dir, '.team-config', 'human-inbox.md')
   const entry = `\n## [${formatTimestamp()}]\n${sanitized}\n`
 
-  fs.appendFileSync(inboxPath, entry, 'utf-8')
+  try {
+    fs.appendFileSync(inboxPath, entry, 'utf-8')
+  } catch {
+    throw new Error('Failed to write to .team-config/human-inbox.md. Check file permissions.')
+  }
 
   console.log(chalk.green('Feedback sent. Team Lead will pick it up on next polling cycle.'))
 }

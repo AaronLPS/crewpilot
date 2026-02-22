@@ -46,16 +46,39 @@ describe('runFeedback', () => {
     expect(() => runFeedback(longMessage, tmpDir)).toThrow(/too long/)
   })
 
-  it('strips markdown heading markers from message body', () => {
-    runFeedback('## Fake heading\nReal content', tmpDir)
+  it('strips all markdown heading levels from message body', () => {
+    runFeedback('# H1 heading\n## H2 heading\n### H3 heading\nPlain text', tmpDir)
 
     const content = fs.readFileSync(
       path.join(tmpDir, '.team-config', 'human-inbox.md'),
       'utf-8'
     )
-    expect(content).not.toContain('## Fake heading')
-    expect(content).toContain('Fake heading')
-    expect(content).toContain('Real content')
+    expect(content).not.toContain('# H1 heading')
+    expect(content).not.toContain('## H2 heading')
+    expect(content).not.toContain('### H3 heading')
+    expect(content).toContain('H1 heading')
+    expect(content).toContain('H2 heading')
+    expect(content).toContain('H3 heading')
+    expect(content).toContain('Plain text')
+  })
+
+  it('strips headings without trailing space', () => {
+    runFeedback('##NoSpace\n###AlsoNoSpace', tmpDir)
+
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.team-config', 'human-inbox.md'),
+      'utf-8'
+    )
+    expect(content).toContain('NoSpace')
+    expect(content).toContain('AlsoNoSpace')
+    // The only headings should be the file's own "# Human Inbox" and the "## [timestamp]" entry
+    expect(content).not.toContain('##NoSpace')
+    expect(content).not.toContain('###AlsoNoSpace')
+  })
+
+  it('throws friendly error when inbox file is not writable', () => {
+    fs.chmodSync(path.join(tmpDir, '.team-config', 'human-inbox.md'), 0o000)
+    expect(() => runFeedback('test', tmpDir)).toThrow(/Failed to write/)
   })
 
   it('errors if .team-config does not exist', () => {

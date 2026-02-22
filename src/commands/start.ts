@@ -33,8 +33,12 @@ export async function runStart(options: StartOptions = {}): Promise<void> {
     )
   }
 
-  const userContextPath = path.join(cwd, '.team-config', 'USER-CONTEXT.md')
-  const userContext = fs.readFileSync(userContextPath, 'utf-8')
+  let userContext: string
+  try {
+    userContext = fs.readFileSync(path.join(cwd, '.team-config', 'USER-CONTEXT.md'), 'utf-8')
+  } catch {
+    throw new Error(`Cannot read .team-config/USER-CONTEXT.md. Run ${chalk.cyan('crewpilot init')} first.`)
+  }
   const projectName = getProjectName(userContext) ?? path.basename(cwd)
   const sessionName = getSessionName(projectName)
 
