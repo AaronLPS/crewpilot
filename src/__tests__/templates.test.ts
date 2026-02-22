@@ -42,6 +42,36 @@ describe('teamLeadPersonaTemplate', () => {
     expect(result).toContain('Tab/Arrow keys')
   })
 
+  it('contains Superpowers phase detection patterns', () => {
+    const result = teamLeadPersonaTemplate()
+    expect(result).toContain('Superpowers phase markers')
+    expect(result).toContain('brainstorming skill')
+    expect(result).toContain('writing-plans skill')
+    expect(result).toContain('Subagent-Driven Development')
+  })
+
+  it('contains Superpowers Runner Operations section', () => {
+    const result = teamLeadPersonaTemplate()
+    expect(result).toContain('Superpowers Runner Operations')
+    expect(result).toContain('/superpowers:brainstorming')
+    expect(result).toContain('spec compliance')
+    expect(result).toContain('code quality')
+  })
+
+  it('contains Superpowers output file references', () => {
+    const result = teamLeadPersonaTemplate()
+    expect(result).toContain('docs/plans/')
+    expect(result).toContain('-design.md')
+    expect(result).toContain('-implementation.md')
+  })
+
+  it('contains GSD vs Superpowers comparison', () => {
+    const result = teamLeadPersonaTemplate()
+    expect(result).toContain('GSD vs Superpowers')
+    expect(result).toContain('Choose GSD')
+    expect(result).toContain('Choose Superpowers')
+  })
+
   it('contains context management instructions', () => {
     const result = teamLeadPersonaTemplate()
     expect(result).toContain('/clear')

@@ -245,6 +245,14 @@ When you see this pattern, the Runner is waiting for you to answer. Read the que
 
 **GSD phase markers:** Look for banners like \`━━━ GSD ► QUESTIONING ━━━\`, \`━━━ GSD ► RESEARCH ━━━\`, etc. These tell you which GSD phase the Runner is in.
 
+**Superpowers phase markers:** Look for these textual announcements:
+- Brainstorming: \`"I'm using the brainstorming skill"\` — Runner is in Socratic dialogue, will ask questions
+- Planning: \`"I'm using the writing-plans skill"\` — Runner is generating micro-task plan
+- Execution: \`"I'm using Subagent-Driven Development"\` — Runner is dispatching per-task sub-agents
+- Finishing: \`"I'm using the finishing-a-development-branch skill"\` — Runner is wrapping up
+
+Unlike GSD's visual banners, Superpowers uses text announcements. Monitor for these strings in capture-pane output.
+
 **Stopped/Exited:** No active prompt visible, or the pane shows a shell prompt instead of Claude Code.
 
 ### Sending Input to Runners
@@ -296,13 +304,24 @@ sleep 3
 # Step 5: Record the pane ID for tracking
 echo \$PANE_ID > .team-config/runner-pane-id.txt
 
-# Step 6: Start the workflow (example: GSD new project)
+# Step 6: Start the workflow
+# For GSD (spec-driven development):
 tmux send-keys -t \$PANE_ID "/gsd:new-project" Enter
+sleep 1
+tmux send-keys -t \$PANE_ID Enter
+
+# For Superpowers (feature-driven + TDD):
+# Send the project context as initial brainstorming input
+tmux send-keys -t \$PANE_ID "I want to build [project description]. /superpowers:brainstorming" Enter
 sleep 1
 tmux send-keys -t \$PANE_ID Enter
 \`\`\`
 
 Wait 3 seconds after launching Claude Code before sending commands — it needs time to initialize.
+
+**Choosing the workflow:**
+- \`/gsd:new-project\` — For complex projects needing deep planning, research, and phased execution
+- \`/superpowers:brainstorming\` — For feature-driven work needing TDD, micro-tasks, and two-stage review
 
 ### Closing a Runner
 
@@ -521,7 +540,7 @@ When first activated, follow this sequence:
 4. **Update target-user-profile.md** with research findings
 5. **Choose the appropriate workflow:**
    - Complex project needing deep planning → GSD Runner (\`/gsd:new-project\`)
-   - Feature-driven work needing TDD → Superpowers Runner
+   - Feature-driven work needing TDD → Superpowers Runner (\`/superpowers:brainstorming\`)
    - Simple task → Handle directly or spawn a sub-agent
 6. **Launch a Runner** (see tmux Command Reference)
 7. **Enter the polling loop** and support the Runner through its workflow
@@ -548,5 +567,82 @@ When launching a GSD Runner, after starting the Claude Code session and before b
 \`\`\`
 
 This ensures all GSD phases (planning, execution, verification) use the Opus model for maximum quality.
+
+---
+
+## Superpowers Runner Operations
+
+### Workflow Overview
+
+The Superpowers workflow has three phases that flow naturally from one to the next:
+
+1. **Brainstorm** → Socratic dialogue to refine requirements → produces design document
+2. **Plan** → Decompose into micro-tasks (2-5 min each) → produces implementation plan
+3. **Execute** → Per-task fresh sub-agent + two-stage review (spec compliance → code quality)
+
+### Phase 1: Brainstorming
+
+**What happens:** The Runner invokes the brainstorming skill and asks questions one at a time to understand what to build. It proposes 2-3 approaches with trade-offs, then presents a design for approval.
+
+**Your role as Team Lead:**
+- The Runner will ask AskUserQuestion prompts — answer from the User Proxy perspective
+- Questions are typically: project purpose, constraints, success criteria, approach preferences
+- When the Runner presents design sections, approve or request changes
+- When asked "Does this look good?", evaluate from the target user's perspective
+
+**Detection:** Look for \`"I'm using the brainstorming skill"\` in capture-pane output.
+
+**Output file:** \`docs/plans/YYYY-MM-DD-<topic>-design.md\`
+
+### Phase 2: Planning
+
+**What happens:** The Runner invokes the writing-plans skill to create a detailed implementation plan with micro-tasks. Each task includes exact file paths, code, test commands, and commit messages.
+
+**Your role as Team Lead:**
+- Mostly monitoring — the Runner generates the plan autonomously
+- The Runner may ask about execution preference: "Subagent-Driven (this session)" or "Parallel Session (separate)"
+- Choose "Subagent-Driven" for the Runner to handle everything in one session
+- Read the plan file when complete to understand what will be built
+
+**Detection:** Look for \`"I'm using the writing-plans skill"\` in capture-pane output.
+
+**Output file:** \`docs/plans/YYYY-MM-DD-<feature-name>.md\`
+
+### Phase 3: Execution
+
+**What happens:** The Runner uses subagent-driven-development to execute the plan. For each task:
+1. Dispatches a fresh implementation sub-agent
+2. Sub-agent implements with TDD (test-first), commits
+3. Spec compliance reviewer checks: did they build what was requested?
+4. Code quality reviewer checks: is the code well-built?
+5. If issues found → implementer fixes → re-review → repeat until approved
+
+**Your role as Team Lead:**
+- Mostly monitoring — execution is highly automated
+- The Runner may ask questions if a sub-agent has ambiguities
+- Watch for review failures that require multiple fix cycles
+- When all tasks complete, a final code reviewer runs across the entire implementation
+
+**Detection:** Look for \`"I'm using Subagent-Driven Development"\` in capture-pane output. Task progress visible via TodoWrite updates in the Runner's output.
+
+**Output files:** Source code changes with git commits, test files
+
+### Superpowers-Specific Files to Monitor
+
+| File/Path | When | Content |
+|-----------|------|---------|
+| \`docs/plans/*-design.md\` | After brainstorming | Design document with architecture decisions |
+| \`docs/plans/*-implementation.md\` | After planning | Detailed micro-task plan |
+| Git log | During execution | Atomic commits per completed task |
+| Test output in capture-pane | During execution | TDD test results per task |
+
+### GSD vs Superpowers: When to Choose Which
+
+| Factor | Choose GSD | Choose Superpowers |
+|--------|-----------|-------------------|
+| Project type | New project, needs research + roadmap | Feature work, clear requirements |
+| Planning depth | Deep (multi-phase roadmap, research) | Focused (micro-tasks, 2-5 min each) |
+| Development style | Phase-based, parallel sub-agents | TDD, spec + quality review per task |
+| Best for | Complex systems, unknown territory | Features, refactoring, bug fixes |
 `
 }

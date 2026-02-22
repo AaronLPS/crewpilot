@@ -88,4 +88,76 @@ describe('runInit', () => {
 
     expect(mockConfirm).toHaveBeenCalled()
   })
+
+  it('uses --description flag to skip description prompt', async () => {
+    mockInput
+      .mockResolvedValueOnce('Users')
+      .mockResolvedValueOnce('Node.js')
+    mockSelect.mockResolvedValueOnce('gsd')
+
+    await runInit({ cwd: tmpDir, name: 'TestProj', description: 'A CLI tool' })
+
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.team-config', 'USER-CONTEXT.md'),
+      'utf-8'
+    )
+    expect(content).toContain('A CLI tool')
+    // description prompt should not have been called — only user + tech prompts
+    expect(mockInput).toHaveBeenCalledTimes(2)
+  })
+
+  it('uses --user flag to skip user description prompt', async () => {
+    mockInput
+      .mockResolvedValueOnce('A project')
+      .mockResolvedValueOnce('Python')
+    mockSelect.mockResolvedValueOnce('gsd')
+
+    await runInit({ cwd: tmpDir, name: 'TestProj', user: 'Developers aged 25-35' })
+
+    const profileContent = fs.readFileSync(
+      path.join(tmpDir, '.team-config', 'target-user-profile.md'),
+      'utf-8'
+    )
+    expect(profileContent).toContain('Developers aged 25-35')
+    expect(mockInput).toHaveBeenCalledTimes(2)
+  })
+
+  it('uses --tech flag to skip tech stack prompt', async () => {
+    mockInput
+      .mockResolvedValueOnce('A project')
+      .mockResolvedValueOnce('End users')
+    mockSelect.mockResolvedValueOnce('gsd')
+
+    await runInit({ cwd: tmpDir, name: 'TestProj', tech: 'React + TypeScript' })
+
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.team-config', 'USER-CONTEXT.md'),
+      'utf-8'
+    )
+    expect(content).toContain('React + TypeScript')
+    expect(mockInput).toHaveBeenCalledTimes(2)
+  })
+
+  it('runs fully non-interactive with all flags', async () => {
+    await runInit({
+      cwd: tmpDir,
+      name: 'FullFlag',
+      description: 'Automated project',
+      user: 'Developers',
+      tech: 'Rust',
+      workflow: 'superpowers',
+    })
+
+    expect(mockInput).not.toHaveBeenCalled()
+    expect(mockSelect).not.toHaveBeenCalled()
+
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.team-config', 'USER-CONTEXT.md'),
+      'utf-8'
+    )
+    expect(content).toContain('FullFlag')
+    expect(content).toContain('Automated project')
+    expect(content).toContain('Rust')
+    expect(content).toContain('superpowers')
+  })
 })

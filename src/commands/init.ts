@@ -9,6 +9,9 @@ import { execFileSync } from 'node:child_process'
 interface InitOptions {
   cwd?: string
   name?: string
+  description?: string
+  user?: string
+  tech?: string
   workflow?: string
   existing?: boolean
 }
@@ -36,15 +39,15 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     default: path.basename(cwd),
   })
 
-  const description = await input({
+  const description = options.description ?? await input({
     message: 'Project description',
   })
 
-  const userDescription = await input({
+  const userDescription = options.user ?? await input({
     message: 'Target user description (who is this for?)',
   })
 
-  const techStack = await input({
+  const techStack = options.tech ?? await input({
     message: 'Tech stack / constraints',
   })
 

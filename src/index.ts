@@ -17,12 +17,18 @@ program
   .command('init')
   .description('Initialize a new Crewpilot project')
   .option('--name <name>', 'Project name (skip prompt)')
+  .option('--description <desc>', 'Project description (skip prompt)')
+  .option('--user <user>', 'Target user description (skip prompt)')
+  .option('--tech <tech>', 'Tech stack / constraints (skip prompt)')
   .option('--workflow <workflow>', 'Preferred workflow: gsd or superpowers (skip prompt)')
   .option('--existing', 'Scan existing codebase to auto-generate project-context.md')
   .action(async (opts) => {
     try {
       await runInit({
         name: opts.name,
+        description: opts.description,
+        user: opts.user,
+        tech: opts.tech,
         workflow: opts.workflow,
         existing: opts.existing,
       })
