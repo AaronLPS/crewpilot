@@ -15,7 +15,7 @@ import {
   sleepMs,
 } from '../tmux.js'
 
-const RECOVERY_PROMPT = `Read .team-config/session-recovery.md and follow the recovery instructions. Read .team-config/team-lead-persona.md to restore your Team Lead persona. Resume work from where you left off.`
+const RECOVERY_PROMPT = `Read .team-config/session-recovery.md and follow the recovery instructions. Read .team-config/team-lead-persona.md to restore your Team Lead persona. Resume work from where you left off. IMPORTANT: Follow the Session Recovery section of your persona, NOT the Project Startup Workflow. Do not re-run the startup sequence.`
 
 interface ResumeOptions {
   cwd?: string
