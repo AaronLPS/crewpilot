@@ -14,8 +14,10 @@ export function formatTimestamp(date: Date = new Date()): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
+const MAX_SESSION_NAME_LENGTH = 64
+
 export function sanitizeSessionName(name: string): string {
-  const sanitized = name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+  const sanitized = name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, MAX_SESSION_NAME_LENGTH).replace(/-$/, '')
   return sanitized || 'project'
 }
 

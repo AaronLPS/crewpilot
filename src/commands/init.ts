@@ -16,8 +16,10 @@ interface InitOptions {
   existing?: boolean
 }
 
+const MAX_FIELD_LENGTH = 1024
+
 function sanitizeField(value: string): string {
-  return value.replace(/[\r\n]+/g, ' ').trim()
+  return value.replace(/[\r\n]+/g, ' ').trim().slice(0, MAX_FIELD_LENGTH)
 }
 
 export async function runInit(options: InitOptions = {}): Promise<void> {
