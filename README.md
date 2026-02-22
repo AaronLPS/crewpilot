@@ -67,7 +67,7 @@ The Team Lead polls Runner sessions via `tmux capture-pane`, detects interactive
 npm install -g crewpilot
 ```
 
-Or build from source:
+Or install from source:
 
 ```bash
 git clone https://github.com/AaronLPS/crewpilot.git

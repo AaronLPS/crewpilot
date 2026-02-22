@@ -6,9 +6,21 @@
   "bin": {
     "crewpilot": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AaronLPS/crewpilot.git"
+  },
+  "homepage": "https://github.com/AaronLPS/crewpilot",
+  "author": "Liping Shi",
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit"
@@ -16,7 +28,7 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["cli", "ai", "claude", "tmux", "agent"],
+  "keywords": ["cli", "ai", "claude", "claude-code", "tmux", "agent", "autonomous", "gsd"],
   "license": "MIT",
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
