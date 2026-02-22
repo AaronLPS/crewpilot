@@ -104,12 +104,20 @@ describe('tmux module', () => {
   describe('listPanes', () => {
     it('parses pane list output', () => {
       mockExecFileSync.mockReturnValue(
-        Buffer.from('%0:1:bash\n%1:0:claude\n')
+        Buffer.from('%0\t1\tbash\n%1\t0\tclaude\n')
       )
       const panes = listPanes('crewpilot-myapp')
       expect(panes).toHaveLength(2)
       expect(panes[0]).toEqual({ id: '%0', active: true, command: 'bash' })
       expect(panes[1]).toEqual({ id: '%1', active: false, command: 'claude' })
+    })
+
+    it('handles commands containing colons', () => {
+      mockExecFileSync.mockReturnValue(
+        Buffer.from('%0\t1\tnode:server\n')
+      )
+      const panes = listPanes('crewpilot-myapp')
+      expect(panes[0]).toEqual({ id: '%0', active: true, command: 'node:server' })
     })
 
     it('returns empty array on error', () => {
@@ -131,14 +139,17 @@ describe('tmux module', () => {
   })
 
   describe('sendTextInput', () => {
-    it('sends text with double Enter for Claude Code', () => {
+    it('sends text with double Enter and sleep for Claude Code', () => {
       mockExecFileSync.mockReturnValue(Buffer.from(''))
+      mockSpawnSync.mockReturnValue({ status: 0 } as any)
       sendTextInput('%1', 'hello world')
-      // Should call send-keys twice (text+Enter, then Enter)
+      // Should call send-keys twice (text+Enter, then Enter) with sleep in between
       const sendKeysCalls = mockExecFileSync.mock.calls.filter(
         call => call[1] && (call[1] as string[])[0] === 'send-keys'
       )
       expect(sendKeysCalls.length).toBe(2)
+      // Verify sleep was called between the two sends
+      expect(mockSpawnSync).toHaveBeenCalledWith('sleep', ['1'])
     })
   })
 

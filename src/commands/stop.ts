@@ -22,10 +22,15 @@ export function runStop(cwd?: string): void {
     throw new Error(`No .team-config/ found. Run ${chalk.cyan('crewpilot init')} first.`)
   }
 
-  const userContext = fs.readFileSync(
-    path.join(dir, '.team-config', 'USER-CONTEXT.md'),
-    'utf-8'
-  )
+  let userContext: string
+  try {
+    userContext = fs.readFileSync(
+      path.join(dir, '.team-config', 'USER-CONTEXT.md'),
+      'utf-8'
+    )
+  } catch {
+    throw new Error(`Cannot read .team-config/USER-CONTEXT.md. Run ${chalk.cyan('crewpilot init')} first.`)
+  }
   const projectName = getProjectName(userContext) ?? path.basename(dir)
   const sessionName = getSessionName(projectName)
 
@@ -46,9 +51,16 @@ export function runStop(cwd?: string): void {
     // runner-pane-id.txt missing — no runners to stop
   }
 
+  const sessionPanes = listPanes(sessionName)
+  const sessionPaneIds = new Set(sessionPanes.map(p => p.id))
+
   runnerPaneIds = runnerPaneIds.filter((id) => {
     if (!VALID_PANE_ID.test(id)) {
       console.warn(chalk.yellow(`Skipping invalid pane ID: ${id}`))
+      return false
+    }
+    if (!sessionPaneIds.has(id)) {
+      console.warn(chalk.yellow(`Skipping pane ${id}: not in session ${sessionName}`))
       return false
     }
     return true

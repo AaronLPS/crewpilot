@@ -41,6 +41,23 @@ describe('runFeedback', () => {
     expect(content).toContain('Second message')
   })
 
+  it('rejects messages exceeding length limit', () => {
+    const longMessage = 'x'.repeat(5000)
+    expect(() => runFeedback(longMessage, tmpDir)).toThrow(/too long/)
+  })
+
+  it('strips markdown heading markers from message body', () => {
+    runFeedback('## Fake heading\nReal content', tmpDir)
+
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.team-config', 'human-inbox.md'),
+      'utf-8'
+    )
+    expect(content).not.toContain('## Fake heading')
+    expect(content).toContain('Fake heading')
+    expect(content).toContain('Real content')
+  })
+
   it('errors if .team-config does not exist', () => {
     const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crewpilot-empty-'))
     expect(() => runFeedback('test', emptyDir)).toThrow(/crewpilot init/)

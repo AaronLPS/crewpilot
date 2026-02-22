@@ -51,6 +51,11 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     message: 'Tech stack / constraints',
   })
 
+  const VALID_WORKFLOWS = ['gsd', 'superpowers', 'ask-me-later']
+  if (options.workflow && !VALID_WORKFLOWS.includes(options.workflow)) {
+    throw new Error(`Invalid workflow: "${options.workflow}". Must be one of: ${VALID_WORKFLOWS.join(', ')}`)
+  }
+
   const workflow = options.workflow ?? await select({
     message: 'Preferred workflow',
     choices: [

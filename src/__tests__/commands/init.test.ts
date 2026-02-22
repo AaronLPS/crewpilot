@@ -138,6 +138,12 @@ describe('runInit', () => {
     expect(mockInput).toHaveBeenCalledTimes(2)
   })
 
+  it('rejects invalid --workflow values', async () => {
+    await expect(
+      runInit({ cwd: tmpDir, name: 'Test', workflow: 'invalid' })
+    ).rejects.toThrow(/Invalid workflow/)
+  })
+
   it('runs fully non-interactive with all flags', async () => {
     await runInit({
       cwd: tmpDir,

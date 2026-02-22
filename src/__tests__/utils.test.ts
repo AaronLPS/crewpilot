@@ -38,6 +38,12 @@ describe('sanitizeSessionName', () => {
   it('strips leading/trailing hyphens', () => {
     expect(sanitizeSessionName('-foo-')).toBe('foo')
   })
+
+  it('returns fallback for pure-unicode or empty names', () => {
+    expect(sanitizeSessionName('日本語')).toBe('project')
+    expect(sanitizeSessionName('!!!')).toBe('project')
+    expect(sanitizeSessionName('')).toBe('project')
+  })
 })
 
 describe('getSessionName', () => {

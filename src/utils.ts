@@ -15,7 +15,8 @@ export function formatTimestamp(date: Date = new Date()): string {
 }
 
 export function sanitizeSessionName(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+  const sanitized = name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+  return sanitized || 'project'
 }
 
 export function getSessionName(projectName: string): string {

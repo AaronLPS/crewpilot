@@ -63,8 +63,27 @@ describe('runStop', () => {
 
     runStop(tmpDir)
 
-    expect(mockSendKeys).toHaveBeenCalled()
+    expect(mockSendKeys).toHaveBeenCalledWith('%1', '/exit')
     expect(mockKillSession).toHaveBeenCalledWith('crewpilot-testapp')
+  })
+
+  it('skips runner pane IDs not in the crewpilot session', () => {
+    mockSessionExists.mockReturnValue(true)
+    mockListPanes.mockReturnValue([
+      { id: '%0', active: true, command: 'claude' },
+    ])
+    fs.writeFileSync(
+      path.join(tmpDir, '.team-config', 'runner-pane-id.txt'),
+      '%99',
+      'utf-8'
+    )
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    runStop(tmpDir)
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('not in session'))
+    expect(mockSendKeys).not.toHaveBeenCalledWith('%99', '/exit')
+    warnSpy.mockRestore()
   })
 
   it('handles missing runner-pane-id.txt gracefully', () => {
@@ -83,6 +102,8 @@ describe('runStop', () => {
     mockSessionExists.mockReturnValue(true)
     mockListPanes.mockReturnValue([
       { id: '%0', active: true, command: 'claude' },
+      { id: '%1', active: false, command: 'claude' },
+      { id: '%2', active: false, command: 'claude' },
     ])
     fs.writeFileSync(
       path.join(tmpDir, '.team-config', 'runner-pane-id.txt'),

@@ -33,10 +33,10 @@ export function listPanes(session: string): PaneInfo[] {
   try {
     const output = tmux(
       'list-panes', '-t', session,
-      '-F', '#{pane_id}:#{pane_active}:#{pane_current_command}'
+      '-F', '#{pane_id}\t#{pane_active}\t#{pane_current_command}'
     )
     return output.trim().split('\n').filter(Boolean).map(line => {
-      const [id, active, command] = line.split(':')
+      const [id, active, command] = line.split('\t')
       return { id, active: active === '1', command }
     })
   } catch {
@@ -63,6 +63,7 @@ export function splitWindowHorizontal(session: string): string {
 
 export function sendTextInput(paneId: string, text: string): void {
   tmux('send-keys', '-t', paneId, text, 'Enter')
+  sleepMs(1000)
   tmux('send-keys', '-t', paneId, 'Enter')
 }
 
