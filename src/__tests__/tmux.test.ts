@@ -1,0 +1,156 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { execFileSync, spawnSync } from 'node:child_process'
+import {
+  sessionExists,
+  createSession,
+  killSession,
+  listPanes,
+  sendKeys,
+  sendEnter,
+  capturePaneContent,
+  splitWindowHorizontal,
+  sendTextInput,
+  attachSession,
+} from '../tmux.js'
+
+vi.mock('node:child_process', () => ({
+  execFileSync: vi.fn(),
+  spawnSync: vi.fn(),
+}))
+
+const mockExecFileSync = vi.mocked(execFileSync)
+const mockSpawnSync = vi.mocked(spawnSync)
+
+describe('tmux module', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('sessionExists', () => {
+    it('returns true when session exists', () => {
+      mockExecFileSync.mockReturnValue(Buffer.from('crewpilot-myapp'))
+      expect(sessionExists('crewpilot-myapp')).toBe(true)
+    })
+
+    it('returns false when session does not exist', () => {
+      mockExecFileSync.mockImplementation(() => {
+        throw new Error('session not found')
+      })
+      expect(sessionExists('crewpilot-myapp')).toBe(false)
+    })
+  })
+
+  describe('createSession', () => {
+    it('calls tmux new-session with correct args', () => {
+      mockExecFileSync.mockReturnValue(Buffer.from(''))
+      createSession('crewpilot-myapp', '/home/user/project')
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'tmux',
+        ['new-session', '-d', '-s', 'crewpilot-myapp', '-c', '/home/user/project'],
+        expect.any(Object)
+      )
+    })
+  })
+
+  describe('killSession', () => {
+    it('calls tmux kill-session', () => {
+      mockExecFileSync.mockReturnValue(Buffer.from(''))
+      killSession('crewpilot-myapp')
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'tmux',
+        ['kill-session', '-t', 'crewpilot-myapp'],
+        expect.any(Object)
+      )
+    })
+  })
+
+  describe('sendKeys', () => {
+    it('calls tmux send-keys with pane and keys', () => {
+      mockExecFileSync.mockReturnValue(Buffer.from(''))
+      sendKeys('%1', 'hello')
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'tmux',
+        ['send-keys', '-t', '%1', 'hello'],
+        expect.any(Object)
+      )
+    })
+  })
+
+  describe('sendEnter', () => {
+    it('sends Enter key', () => {
+      mockExecFileSync.mockReturnValue(Buffer.from(''))
+      sendEnter('%1')
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'tmux',
+        ['send-keys', '-t', '%1', 'Enter'],
+        expect.any(Object)
+      )
+    })
+  })
+
+  describe('capturePaneContent', () => {
+    it('captures pane content with default 50 lines', () => {
+      mockExecFileSync.mockReturnValue(Buffer.from('line1\nline2\n'))
+      const result = capturePaneContent('%1')
+      expect(result).toBe('line1\nline2\n')
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'tmux',
+        ['capture-pane', '-t', '%1', '-p', '-S', '-50'],
+        expect.any(Object)
+      )
+    })
+  })
+
+  describe('listPanes', () => {
+    it('parses pane list output', () => {
+      mockExecFileSync.mockReturnValue(
+        Buffer.from('%0:1:bash\n%1:0:claude\n')
+      )
+      const panes = listPanes('crewpilot-myapp')
+      expect(panes).toHaveLength(2)
+      expect(panes[0]).toEqual({ id: '%0', active: true, command: 'bash' })
+      expect(panes[1]).toEqual({ id: '%1', active: false, command: 'claude' })
+    })
+
+    it('returns empty array on error', () => {
+      mockExecFileSync.mockImplementation(() => {
+        throw new Error('no session')
+      })
+      expect(listPanes('crewpilot-myapp')).toEqual([])
+    })
+  })
+
+  describe('splitWindowHorizontal', () => {
+    it('splits and returns new pane ID', () => {
+      mockExecFileSync
+        .mockReturnValueOnce(Buffer.from(''))  // split-window
+        .mockReturnValueOnce(Buffer.from('%2\n'))  // display-message
+      const paneId = splitWindowHorizontal('crewpilot-myapp')
+      expect(paneId).toBe('%2')
+    })
+  })
+
+  describe('sendTextInput', () => {
+    it('sends text with double Enter for Claude Code', () => {
+      mockExecFileSync.mockReturnValue(Buffer.from(''))
+      sendTextInput('%1', 'hello world')
+      // Should call send-keys twice (text+Enter, then Enter)
+      const sendKeysCalls = mockExecFileSync.mock.calls.filter(
+        call => call[1] && (call[1] as string[])[0] === 'send-keys'
+      )
+      expect(sendKeysCalls.length).toBe(2)
+    })
+  })
+
+  describe('attachSession', () => {
+    it('uses spawnSync with inherited stdio', () => {
+      mockSpawnSync.mockReturnValue({ status: 0 } as any)
+      attachSession('crewpilot-myapp')
+      expect(mockSpawnSync).toHaveBeenCalledWith(
+        'tmux',
+        ['attach-session', '-t', 'crewpilot-myapp'],
+        { stdio: 'inherit' }
+      )
+    })
+  })
+})
