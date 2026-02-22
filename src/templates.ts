@@ -305,8 +305,14 @@ sleep 3
 echo \$PANE_ID > .team-config/runner-pane-id.txt
 
 # Step 6: Start the workflow
-# For GSD (spec-driven development):
+# For NEW GSD project (no .planning/STATE.md):
 tmux send-keys -t \$PANE_ID "/gsd:new-project" Enter
+sleep 1
+tmux send-keys -t \$PANE_ID Enter
+
+# For EXISTING GSD project (.planning/STATE.md detected):
+# Use the command determined in Project Startup Workflow step 7
+tmux send-keys -t \$PANE_ID "/gsd:resume-work" Enter  # or /gsd:progress or /gsd:new-milestone
 sleep 1
 tmux send-keys -t \$PANE_ID Enter
 
@@ -320,7 +326,10 @@ tmux send-keys -t \$PANE_ID Enter
 Wait 3 seconds after launching Claude Code before sending commands — it needs time to initialize.
 
 **Choosing the workflow:**
-- \`/gsd:new-project\` — For complex projects needing deep planning, research, and phased execution
+- \`/gsd:new-project\` — For NEW projects needing deep planning, research, and phased execution
+- \`/gsd:resume-work\` — For EXISTING GSD projects with in-progress work
+- \`/gsd:progress\` — For EXISTING GSD projects to check state and route to next action
+- \`/gsd:new-milestone\` — For EXISTING GSD projects that completed all phases in the current milestone
 - \`/superpowers:brainstorming\` — For feature-driven work needing TDD, micro-tasks, and two-stage review
 
 ### Closing a Runner
@@ -538,12 +547,20 @@ When first activated, follow this sequence:
 2. **Communicate with the human** (if they're present in pane 0) to confirm understanding of the project
 3. **Spawn a research sub-agent** to investigate the target user group (use Task tool with Explore agent type)
 4. **Update target-user-profile.md** with research findings
-5. **Choose the appropriate workflow:**
+5. **Check for existing GSD project:** Before choosing a workflow, check if \`.planning/STATE.md\` exists.
+   - If it exists, this is an **existing GSD project** — skip step 6 and go to step 7
+   - If it does not exist, proceed to step 6 (fresh project)
+6. **Choose the appropriate workflow** (fresh projects only):
    - Complex project needing deep planning → GSD Runner (\`/gsd:new-project\`)
    - Feature-driven work needing TDD → Superpowers Runner (\`/superpowers:brainstorming\`)
    - Simple task → Handle directly or spawn a sub-agent
-6. **Launch a Runner** (see tmux Command Reference)
-7. **Enter the polling loop** and support the Runner through its workflow
+7. **For existing GSD projects:** Read \`.planning/STATE.md\` and \`.planning/ROADMAP.md\` to determine the right GSD resume command:
+   - **Phase currently executing (state shows in-progress work)** → use \`/gsd:resume-work\`
+   - **Phase completed, more phases remain in roadmap** → use \`/gsd:progress\`
+   - **All phases in current milestone completed** → use \`/gsd:new-milestone\`
+   - **State is unclear or stale** → use \`/gsd:progress\` (safe default — it inspects state and routes to the next action)
+8. **Launch a Runner** (see tmux Command Reference — use the existing GSD path if step 5 detected GSD state)
+9. **Enter the polling loop** and support the Runner through its workflow
 
 ---
 
