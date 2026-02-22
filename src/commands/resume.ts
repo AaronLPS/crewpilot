@@ -1,0 +1,71 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import chalk from 'chalk'
+import { checkPrereqs } from '../prereqs.js'
+import { teamConfigExists } from '../scaffold.js'
+import { getProjectName, getSessionName } from '../utils.js'
+import {
+  sessionExists,
+  createSession,
+  listPanes,
+  sendKeys,
+  sendEnter,
+  sendTextInput,
+  attachSession,
+  sleepMs,
+} from '../tmux.js'
+
+const RECOVERY_PROMPT = `Read .team-config/session-recovery.md and follow the recovery instructions. Read .team-config/team-lead-persona.md to restore your Team Lead persona. Resume work from where you left off.`
+
+interface ResumeOptions {
+  cwd?: string
+  fresh?: boolean
+  noAttach?: boolean
+}
+
+export async function runResume(options: ResumeOptions = {}): Promise<void> {
+  const cwd = options.cwd ?? process.cwd()
+
+  checkPrereqs(['tmux', 'claude'])
+
+  if (!teamConfigExists(cwd)) {
+    throw new Error(
+      `No .team-config/ found. Run ${chalk.cyan('crewpilot init')} first.`
+    )
+  }
+
+  const userContextPath = path.join(cwd, '.team-config', 'USER-CONTEXT.md')
+  const userContext = fs.readFileSync(userContextPath, 'utf-8')
+  const projectName = getProjectName(userContext) ?? path.basename(cwd)
+  const sessionName = getSessionName(projectName)
+
+  if (sessionExists(sessionName)) {
+    const panes = listPanes(sessionName)
+    if (panes.length > 0) {
+      console.log(chalk.green(`Session "${sessionName}" is alive with ${panes.length} pane(s). Attaching...`))
+      attachSession(sessionName)
+      return
+    }
+  }
+
+  console.log(chalk.blue(`Creating new session: ${sessionName}`))
+  createSession(sessionName, cwd)
+
+  const claudeCmd = options.fresh
+    ? 'claude --dangerously-skip-permissions'
+    : 'claude --continue --dangerously-skip-permissions'
+
+  sendKeys(`${sessionName}:0`, claudeCmd)
+  sendEnter(`${sessionName}:0`)
+  sleepMs(4000)
+
+  sendTextInput(`${sessionName}:0`, RECOVERY_PROMPT)
+
+  console.log(chalk.green(`\nCrewpilot resumed! Session: ${sessionName}`))
+  console.log(chalk.gray(`Mode: ${options.fresh ? 'fresh start with recovery' : 'continuing last conversation'}`))
+
+  if (!options.noAttach) {
+    console.log(chalk.blue('\nAttaching to session...'))
+    attachSession(sessionName)
+  }
+}
