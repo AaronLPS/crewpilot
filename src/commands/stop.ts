@@ -35,9 +35,24 @@ export function runStop(cwd?: string): void {
 
   console.log(chalk.blue(`Stopping session: ${sessionName}`))
 
-  const runnerPanePath = path.join(dir, '.team-config', 'runner-pane-id.txt')
-  const runnerPaneContent = fs.readFileSync(runnerPanePath, 'utf-8').trim()
-  const runnerPaneIds = runnerPaneContent ? runnerPaneContent.split('\n').filter(Boolean) : []
+  const VALID_PANE_ID = /^%\d+$/
+
+  let runnerPaneIds: string[] = []
+  try {
+    const runnerPanePath = path.join(dir, '.team-config', 'runner-pane-id.txt')
+    const runnerPaneContent = fs.readFileSync(runnerPanePath, 'utf-8').trim()
+    runnerPaneIds = runnerPaneContent ? runnerPaneContent.split('\n').filter(Boolean) : []
+  } catch {
+    // runner-pane-id.txt missing — no runners to stop
+  }
+
+  runnerPaneIds = runnerPaneIds.filter((id) => {
+    if (!VALID_PANE_ID.test(id)) {
+      console.warn(chalk.yellow(`Skipping invalid pane ID: ${id}`))
+      return false
+    }
+    return true
+  })
 
   for (const paneId of runnerPaneIds) {
     try {

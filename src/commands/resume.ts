@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import chalk from 'chalk'
+import { confirm } from '@inquirer/prompts'
 import { checkPrereqs } from '../prereqs.js'
 import { teamConfigExists } from '../scaffold.js'
 import { getProjectName, getSessionName } from '../utils.js'
@@ -46,6 +47,20 @@ export async function runResume(options: ResumeOptions = {}): Promise<void> {
       attachSession(sessionName)
       return
     }
+  }
+
+  const proceed = await confirm({
+    message: chalk.yellow(
+      'WARNING: Crewpilot launches Claude Code with --dangerously-skip-permissions.\n' +
+      'This disables all permission gates. Claude Code will have unrestricted access\n' +
+      'to your file system and shell. Only proceed in a controlled environment.\n\n' +
+      'Continue?'
+    ),
+    default: true,
+  })
+  if (!proceed) {
+    console.log(chalk.gray('Aborted.'))
+    return
   }
 
   console.log(chalk.blue(`Creating new session: ${sessionName}`))

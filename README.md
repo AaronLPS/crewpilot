@@ -239,6 +239,18 @@ Crewpilot uses a **pure tmux + file system architecture** — no custom agent pr
 
 This design was chosen over Claude Code's Agent Teams feature after discovering that Agent Teams' permission gates create deadlocks when combined with GSD/Superpowers workflows. The tmux approach lets each workflow run natively with its own internal sub-agents.
 
+## Security
+
+Crewpilot runs Claude Code with `--dangerously-skip-permissions`, which disables all permission gates. This means Claude Code has **unrestricted access** to your file system and shell — it can read, write, and delete files, and execute arbitrary commands without asking for confirmation.
+
+**Recommendations:**
+
+- Run Crewpilot in a **dedicated project directory**, not your home directory or system directories
+- Do not run Crewpilot in directories containing sensitive credentials or unrelated projects
+- `human-inbox.md` is a trust boundary — the Team Lead reads and acts on its contents. Only write to it from trusted sources
+
+The CLI warns you about this on every `crewpilot start` and `crewpilot resume` and requires confirmation before proceeding.
+
 ## Development
 
 ```bash

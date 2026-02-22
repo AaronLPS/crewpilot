@@ -3,6 +3,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 
+vi.mock('@inquirer/prompts', () => ({
+  confirm: vi.fn().mockResolvedValue(true),
+}))
+
 vi.mock('../../prereqs.js', () => ({
   checkPrereqs: vi.fn(),
 }))
@@ -18,9 +22,11 @@ vi.mock('../../tmux.js', () => ({
   sleepMs: vi.fn(),
 }))
 
+import { confirm } from '@inquirer/prompts'
 import { sessionExists, createSession, sendKeys, sendTextInput, attachSession, listPanes } from '../../tmux.js'
 import { runResume } from '../../commands/resume.js'
 
+const mockConfirm = vi.mocked(confirm)
 const mockSessionExists = vi.mocked(sessionExists)
 const mockCreateSession = vi.mocked(createSession)
 const mockSendKeys = vi.mocked(sendKeys)
@@ -65,6 +71,15 @@ describe('runResume', () => {
     expect(mockCreateSession).toHaveBeenCalled()
     const sendKeysCall = mockSendKeys.mock.calls[0]
     expect(sendKeysCall[1]).toContain('--continue')
+  })
+
+  it('exits early if user declines the permissions warning', async () => {
+    mockSessionExists.mockReturnValue(false)
+    mockConfirm.mockResolvedValueOnce(false)
+
+    await runResume({ cwd: tmpDir, noAttach: true })
+
+    expect(mockCreateSession).not.toHaveBeenCalled()
   })
 
   it('creates new session without --continue when --fresh', async () => {

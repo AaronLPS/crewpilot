@@ -67,6 +67,40 @@ describe('runStop', () => {
     expect(mockKillSession).toHaveBeenCalledWith('crewpilot-testapp')
   })
 
+  it('handles missing runner-pane-id.txt gracefully', () => {
+    mockSessionExists.mockReturnValue(true)
+    mockListPanes.mockReturnValue([
+      { id: '%0', active: true, command: 'claude' },
+    ])
+    fs.unlinkSync(path.join(tmpDir, '.team-config', 'runner-pane-id.txt'))
+
+    runStop(tmpDir)
+
+    expect(mockKillSession).toHaveBeenCalledWith('crewpilot-testapp')
+  })
+
+  it('skips invalid pane IDs with warning', () => {
+    mockSessionExists.mockReturnValue(true)
+    mockListPanes.mockReturnValue([
+      { id: '%0', active: true, command: 'claude' },
+    ])
+    fs.writeFileSync(
+      path.join(tmpDir, '.team-config', 'runner-pane-id.txt'),
+      '%1\n; rm -rf /\n%2\n',
+      'utf-8'
+    )
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    runStop(tmpDir)
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Skipping invalid pane ID'))
+    // Ensure the injected string was never passed to sendKeys
+    for (const call of mockSendKeys.mock.calls) {
+      expect(call[0]).not.toContain('rm -rf')
+    }
+    warnSpy.mockRestore()
+  })
+
   it('kills session even without runner panes', () => {
     mockSessionExists.mockReturnValue(true)
     mockListPanes.mockReturnValue([

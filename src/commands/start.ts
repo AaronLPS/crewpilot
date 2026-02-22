@@ -51,6 +51,20 @@ export async function runStart(options: StartOptions = {}): Promise<void> {
     return
   }
 
+  const proceed = await confirm({
+    message: chalk.yellow(
+      'WARNING: Crewpilot launches Claude Code with --dangerously-skip-permissions.\n' +
+      'This disables all permission gates. Claude Code will have unrestricted access\n' +
+      'to your file system and shell. Only proceed in a controlled environment.\n\n' +
+      'Continue?'
+    ),
+    default: true,
+  })
+  if (!proceed) {
+    console.log(chalk.gray('Aborted.'))
+    return
+  }
+
   console.log(chalk.blue(`Creating tmux session: ${sessionName}`))
   createSession(sessionName, cwd)
 

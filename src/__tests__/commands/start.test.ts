@@ -4,7 +4,7 @@ import path from 'node:path'
 import os from 'node:os'
 
 vi.mock('@inquirer/prompts', () => ({
-  confirm: vi.fn(),
+  confirm: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock('../../prereqs.js', () => ({
@@ -21,9 +21,11 @@ vi.mock('../../tmux.js', () => ({
   sleepMs: vi.fn(),
 }))
 
+import { confirm } from '@inquirer/prompts'
 import { sessionExists, createSession, sendKeys, sendTextInput, attachSession } from '../../tmux.js'
 import { runStart } from '../../commands/start.js'
 
+const mockConfirm = vi.mocked(confirm)
 const mockSessionExists = vi.mocked(sessionExists)
 const mockCreateSession = vi.mocked(createSession)
 const mockSendKeys = vi.mocked(sendKeys)
@@ -61,6 +63,21 @@ describe('runStart', () => {
     expect(mockCreateSession).toHaveBeenCalledWith('crewpilot-testapp', tmpDir)
     expect(mockSendKeys).toHaveBeenCalled()
     expect(mockSendTextInput).toHaveBeenCalled()
+  })
+
+  it('exits early if user declines the permissions warning', async () => {
+    const configDir = path.join(tmpDir, '.team-config')
+    fs.mkdirSync(configDir, { recursive: true })
+    fs.writeFileSync(
+      path.join(configDir, 'USER-CONTEXT.md'),
+      '# User Context\n\n## Project Name\nTestApp\n',
+      'utf-8'
+    )
+    mockConfirm.mockResolvedValueOnce(false)
+
+    await runStart({ cwd: tmpDir, noAttach: true })
+
+    expect(mockCreateSession).not.toHaveBeenCalled()
   })
 
   it('does not attach when --no-attach is set', async () => {
