@@ -1,3 +1,161 @@
+interface UserProfileInput {
+  description: string
+}
+
+export function targetUserProfileTemplate(input: UserProfileInput): string {
+  const today = new Date().toISOString().split('T')[0]
+  return `# Target User Profile
+version: 1
+last_updated: ${today}
+human_confirmed: false
+
+## Demographics
+${input.description}
+
+## Core Needs (priority ordered)
+1. (To be determined through research and human input)
+
+## Pain Points
+1. (To be determined through research)
+
+## Usage Patterns
+- typical_session_duration: unknown
+- frequency: unknown
+- context: unknown
+
+## Preferences
+- ui_style: unknown
+- interaction_model: unknown
+
+## Anti-Needs (things the user explicitly does NOT want)
+1. (To be determined)
+
+## Research Findings
+- (No research conducted yet)
+
+## Version History
+- v1: Initial version from project setup
+`
+}
+
+interface UserContextInput {
+  projectName: string
+  description: string
+  techStack: string
+  workflow: string
+}
+
+export function userContextTemplate(input: UserContextInput): string {
+  return `# User Context
+
+## Project Name
+${input.projectName}
+
+## Description
+${input.description}
+
+## Tech Stack / Constraints
+${input.techStack}
+
+## Preferred Workflow
+${input.workflow}
+
+## Additional Requirements
+(None specified yet. Human can add requirements here or via crewpilot feedback.)
+`
+}
+
+export function projectContextTemplate(): string {
+  return `# Project Context
+
+## Architecture
+TODO: Describe the project architecture. This will be auto-filled if you ran crewpilot init --existing, or filled in by the Team Lead after analyzing the codebase.
+
+## Key Technologies
+TODO
+
+## Directory Structure
+TODO
+
+## Current State
+New project — no existing code.
+`
+}
+
+export function sessionRecoveryTemplate(): string {
+  return `# Session Recovery Instructions
+
+Execute these recovery steps in order:
+
+1. Read \`.team-config/target-user-profile.md\` to restore your User Proxy persona
+2. Read \`.team-config/state-snapshot.md\` to understand the last known state
+3. Read \`.planning/STATE.md\` (if it exists) to understand GSD/Superpowers progress
+4. Check for active Runner tmux panes:
+   - Read \`.team-config/runner-pane-id.txt\` for pane IDs
+   - Run \`tmux list-panes\` to verify which panes are alive
+   - If alive: capture-pane, check state, resume polling
+   - If dead and work incomplete: launch new Runner, resume from last phase
+   - If dead and work complete: proceed to review
+5. Check \`.team-config/human-inbox.md\` for messages sent during downtime
+
+## Current Project Phase
+(Not yet started)
+
+## Current Workflow
+(Not yet selected)
+
+## Last Snapshot Time
+(No snapshots yet)
+
+## Pending Items
+- [ ] Initial project setup
+`
+}
+
+export function communicationLogTemplate(): string {
+  return `# Communication Log
+
+This file records all Q&A interactions between the Team Lead and Runners.
+
+Format:
+## {timestamp} | {workflow} {phase} | Phase {N}
+Q: "{question}"
+A: (User Proxy) "{answer}"
+Basis: {source of decision}
+
+---
+
+(No interactions recorded yet)
+`
+}
+
+export function humanInboxTemplate(): string {
+  return `# Human Inbox
+
+Write messages here for the Team Lead to pick up on its next polling cycle.
+You can also use: crewpilot feedback "your message"
+
+Messages are processed in order. Add new messages at the bottom.
+
+---
+
+(No messages yet)
+`
+}
+
+export function claudeMdAppend(): string {
+  return `
+## Crewpilot Team Configuration
+
+You are the Team Lead in a Crewpilot agent team framework.
+Read \`.team-config/team-lead-persona.md\` for your complete behavioral specification.
+Read \`.team-config/target-user-profile.md\` for the target user profile.
+Read \`.team-config/USER-CONTEXT.md\` for project context and user requirements.
+
+You MUST follow the Team Lead persona instructions precisely.
+`
+}
+
 export function teamLeadPersonaTemplate(): string {
   return `# Team Lead Persona
 

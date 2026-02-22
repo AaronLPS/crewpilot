@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { teamLeadPersonaTemplate } from '../templates.js'
+import {
+  teamLeadPersonaTemplate,
+  targetUserProfileTemplate,
+  userContextTemplate,
+  projectContextTemplate,
+  sessionRecoveryTemplate,
+  communicationLogTemplate,
+  humanInboxTemplate,
+  claudeMdAppend,
+} from '../templates.js'
 
 describe('teamLeadPersonaTemplate', () => {
   it('returns a non-empty string', () => {
@@ -46,5 +55,69 @@ describe('teamLeadPersonaTemplate', () => {
     expect(result).toContain('communication-log.md')
     expect(result).toContain('human-inbox.md')
     expect(result).toContain('session-recovery.md')
+  })
+})
+
+describe('targetUserProfileTemplate', () => {
+  it('includes user description in output', () => {
+    const result = targetUserProfileTemplate({ description: 'College students aged 18-22' })
+    expect(result).toContain('College students aged 18-22')
+    expect(result).toContain('# Target User Profile')
+    expect(result).toContain('version: 1')
+  })
+})
+
+describe('userContextTemplate', () => {
+  it('includes project info', () => {
+    const result = userContextTemplate({
+      projectName: 'TaskFlow',
+      description: 'A project management tool',
+      techStack: 'React + Node.js',
+      workflow: 'gsd',
+    })
+    expect(result).toContain('TaskFlow')
+    expect(result).toContain('A project management tool')
+    expect(result).toContain('React + Node.js')
+    expect(result).toContain('gsd')
+  })
+})
+
+describe('projectContextTemplate', () => {
+  it('returns empty template', () => {
+    const result = projectContextTemplate()
+    expect(result).toContain('# Project Context')
+    expect(result).toContain('TODO')
+  })
+})
+
+describe('sessionRecoveryTemplate', () => {
+  it('contains recovery steps', () => {
+    const result = sessionRecoveryTemplate()
+    expect(result).toContain('Recovery')
+    expect(result).toContain('target-user-profile.md')
+    expect(result).toContain('state-snapshot.md')
+  })
+})
+
+describe('communicationLogTemplate', () => {
+  it('contains header and format example', () => {
+    const result = communicationLogTemplate()
+    expect(result).toContain('# Communication Log')
+  })
+})
+
+describe('humanInboxTemplate', () => {
+  it('contains usage instructions', () => {
+    const result = humanInboxTemplate()
+    expect(result).toContain('# Human Inbox')
+    expect(result).toContain('crewpilot feedback')
+  })
+})
+
+describe('claudeMdAppend', () => {
+  it('contains Team Lead directives', () => {
+    const result = claudeMdAppend()
+    expect(result).toContain('Team Lead')
+    expect(result).toContain('team-lead-persona.md')
   })
 })
