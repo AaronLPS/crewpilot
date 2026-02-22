@@ -89,6 +89,39 @@ crewpilot resume
 crewpilot stop
 ```
 
+## Existing Projects
+
+Crewpilot works with existing codebases, including projects that already have a GSD workflow in progress.
+
+### Any existing project
+
+```bash
+cd /path/to/your/project
+crewpilot init --existing
+crewpilot start
+```
+
+The `--existing` flag scans your codebase with Claude Code and writes an architecture summary to `.team-config/project-context.md`. Your existing `CLAUDE.md` is appended to, not overwritten.
+
+### Existing GSD project
+
+If your project already has `.planning/STATE.md` from a previous GSD session, the Team Lead automatically detects it at startup. Instead of launching `/gsd:new-project`, it reads your GSD state and routes to the right resume command:
+
+| Project state | Command used |
+|---|---|
+| Phase in progress | `/gsd:resume-work` |
+| Phase done, more phases remain | `/gsd:progress` |
+| All milestone phases completed | `/gsd:new-milestone` |
+| State unclear | `/gsd:progress` (safe default) |
+
+```bash
+cd /path/to/your/gsd-project
+crewpilot init --existing --workflow gsd
+crewpilot start
+```
+
+No manual intervention needed — the Team Lead picks up where GSD left off.
+
 ## Commands
 
 ### `crewpilot init`
