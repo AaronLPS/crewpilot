@@ -1,0 +1,32 @@
+{
+  "name": "crewpilot",
+  "version": "0.1.0",
+  "description": "CLI tool that bootstraps and manages an AI Agent Team framework on top of Claude Code",
+  "type": "module",
+  "bin": {
+    "crewpilot": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["cli", "ai", "claude", "tmux", "agent"],
+  "license": "MIT",
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "chalk": "^5.4.0",
+    "commander": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
