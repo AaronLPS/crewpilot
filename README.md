@@ -47,7 +47,17 @@ The Team Lead polls Runner sessions via `tmux capture-pane`, detects interactive
 ## Prerequisites
 
 - **Node.js** >= 18
-- **tmux** installed and available in PATH
+- **tmux** — Crewpilot uses tmux to run the Team Lead and Runners as separate terminal panes. You don't need to know tmux — Crewpilot manages sessions for you.
+  ```bash
+  # macOS
+  brew install tmux
+
+  # Ubuntu / Debian
+  sudo apt install tmux
+
+  # Fedora
+  sudo dnf install tmux
+  ```
 - **Claude Code** installed (`npm install -g @anthropic-ai/claude-code`)
 - An Anthropic API key configured for Claude Code
 
