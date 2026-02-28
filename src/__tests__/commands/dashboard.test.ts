@@ -23,6 +23,7 @@ vi.mock('node:http', async (importOriginal) => {
   return {
     ...actual as object,
     createServer: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
       listen: vi.fn(function(this: any, port: any, cb: any) {
         if (typeof cb === 'function') cb()
         return this

@@ -461,6 +461,15 @@ export async function runDashboard(options: DashboardOptions = {}): Promise<void
   })
 
   // Start server
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(chalk.red(`Port ${port} is already in use.`))
+      console.log(chalk.gray(`Try a different port: ${chalk.cyan(`crewpilot dashboard --port ${port + 1}`)}`))
+      process.exit(1)
+    }
+    throw err
+  })
+
   server.listen(port, () => {
     console.log(chalk.bold(`\n── Crewpilot Dashboard ──\n`))
     console.log(chalk.green(`Server running at http://localhost:${port}`))
