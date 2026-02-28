@@ -61,6 +61,10 @@ export function splitWindowHorizontal(session: string): string {
   return tmux('display-message', '-p', '-t', `${session}:{last}`, '#{pane_id}').trim()
 }
 
+export function createWindow(session: string): string {
+  return tmux('new-window', '-d', '-t', session, '-P', '-F', '#{pane_id}').trim()
+}
+
 export function sendTextInput(paneId: string, text: string): void {
   tmux('send-keys', '-t', paneId, text, 'Enter')
   sleepMs(1000)

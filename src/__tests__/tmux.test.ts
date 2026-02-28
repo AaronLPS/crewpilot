@@ -11,6 +11,7 @@ import {
   splitWindowHorizontal,
   sendTextInput,
   attachSession,
+  createWindow,
 } from '../tmux.js'
 
 vi.mock('node:child_process', () => ({
@@ -135,6 +136,20 @@ describe('tmux module', () => {
         .mockReturnValueOnce(Buffer.from('%2\n'))  // display-message
       const paneId = splitWindowHorizontal('crewpilot-myapp')
       expect(paneId).toBe('%2')
+    })
+  })
+
+  describe('createWindow', () => {
+    it('creates a detached window and returns pane ID', () => {
+      mockExecFileSync
+        .mockReturnValueOnce(Buffer.from('%3\n'))  // new-window with -P -F returns pane ID
+      const paneId = createWindow('crewpilot-myapp')
+      expect(paneId).toBe('%3')
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'tmux',
+        ['new-window', '-d', '-t', 'crewpilot-myapp', '-P', '-F', '#{pane_id}'],
+        expect.any(Object)
+      )
     })
   })
 
