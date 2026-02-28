@@ -63,7 +63,11 @@ The Team Lead polls Runner sessions via `tmux capture-pane`, detects interactive
 
 ## Installation
 
-> **Note:** The npm package is not yet published. For now, install from source.
+```bash
+npm install -g crewpilot
+```
+
+Or install from source:
 
 ```bash
 git clone https://github.com/AaronLPS/crewpilot.git

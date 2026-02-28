@@ -41,12 +41,12 @@
   "license": "MIT",
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
-    "@types/express": "^5.0.6",
     "chalk": "^5.4.0",
     "commander": "^13.0.0",
     "express": "^5.2.1"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.7.0",
