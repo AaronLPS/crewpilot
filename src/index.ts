@@ -11,6 +11,7 @@ import { runDashboard } from './commands/dashboard.js'
 import { runMonitor } from './commands/monitor.js'
 import { runExport } from './commands/export.js'
 import { runLaunchRunner } from './commands/launch-runner.js'
+import { runStopRunner } from './commands/stop-runner.js'
 
 const program = new Command()
 
@@ -230,6 +231,19 @@ program
         workflow: opts.workflow,
         prompt: opts.prompt,
       })
+    } catch (err: any) {
+      console.error(err.message)
+      process.exit(1)
+    }
+  })
+
+program
+  .command('stop-runner')
+  .description('Stop the active Runner pane')
+  .option('--force', 'Force kill the Runner pane instead of graceful shutdown')
+  .action((opts) => {
+    try {
+      runStopRunner({ force: opts.force })
     } catch (err: any) {
       console.error(err.message)
       process.exit(1)
