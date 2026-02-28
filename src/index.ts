@@ -10,6 +10,7 @@ import { runWatch, runCheck } from './commands/watch.js'
 import { runDashboard } from './commands/dashboard.js'
 import { runMonitor } from './commands/monitor.js'
 import { runExport } from './commands/export.js'
+import { runLaunchRunner } from './commands/launch-runner.js'
 
 const program = new Command()
 
@@ -211,6 +212,23 @@ program
         format: opts.format,
         output: opts.output,
         includeLogs: opts.includeLogs,
+      })
+    } catch (err: any) {
+      console.error(err.message)
+      process.exit(1)
+    }
+  })
+
+program
+  .command('launch-runner')
+  .description('Launch a Runner in a new tmux pane (atomic, reliable)')
+  .option('--workflow <workflow>', 'Workflow to start: gsd or superpowers')
+  .option('--prompt <text>', 'Custom prompt to send to the Runner')
+  .action(async (opts) => {
+    try {
+      await runLaunchRunner({
+        workflow: opts.workflow,
+        prompt: opts.prompt,
       })
     } catch (err: any) {
       console.error(err.message)
