@@ -260,4 +260,4 @@ npm run lint       # type check
 
 ## License
 
-[MIT](LICENSE) - Liping Shi
+[MIT](LICENSE)
