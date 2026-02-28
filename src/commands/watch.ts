@@ -620,7 +620,7 @@ export async function runWatch(options: WatchOptions = {}): Promise<void> {
   if (config.notificationMethod === 'log' || config.notificationMethod === 'both') {
     try {
       const timestamp = new Date().toISOString()
-      fs.appendFileSync(config.logFile, `\n[${timestamp}] Watch started for ${sessionName}\n`)
+      fs.appendFileSync(config.logFile!, `\n[${timestamp}] Watch started for ${sessionName}\n`)
     } catch (err) {
       console.log(chalk.yellow(`⚠ Could not initialize log file: ${err}`))
     }
