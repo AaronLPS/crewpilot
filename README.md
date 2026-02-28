@@ -1,7 +1,7 @@
 # Crewpilot
 
 [![npm version](https://img.shields.io/npm/v/crewpilot.svg)](https://www.npmjs.com/package/crewpilot)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/AaronLPS/crewpilot/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/AaronLPS/crewpilot/blob/master/LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 
