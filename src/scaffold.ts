@@ -16,6 +16,7 @@ export interface ScaffoldInput {
   userDescription: string
   techStack: string
   workflow: string
+  defaultBranch?: string
 }
 
 export function scaffoldTeamConfig(projectDir: string, input: ScaffoldInput): void {
@@ -61,6 +62,17 @@ export function scaffoldTeamConfig(projectDir: string, input: ScaffoldInput): vo
   } catch (err: any) {
     throw new Error(`Failed to write config files: ${err.message}`)
   }
+
+  // Write project-config.json
+  const projectConfig = {
+    defaultBranch: input.defaultBranch ?? 'master',
+    createdAt: new Date().toISOString(),
+  }
+  fs.writeFileSync(
+    path.join(configDir, 'project-config.json'),
+    JSON.stringify(projectConfig, null, 2),
+    'utf-8'
+  )
 }
 
 export function teamConfigExists(projectDir: string): boolean {
