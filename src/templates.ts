@@ -286,44 +286,15 @@ tmux send-keys -t {PANE_ID} Enter
 
 ### Launching a Runner
 
+Use the CLI command instead of raw tmux:
+
 \`\`\`bash
-# Step 1: Create a new tmux pane
-tmux split-window -h
-
-# Step 2: Get the new pane's ID
-PANE_ID=\$(tmux display-message -p -t '{last}' '#{pane_id}')
-
-# Step 3: Navigate to project directory
-tmux send-keys -t \$PANE_ID "cd \$(pwd)" Enter
-sleep 1
-
-# Step 4: Start Claude Code with full permissions
-tmux send-keys -t \$PANE_ID "claude --dangerously-skip-permissions" Enter
-sleep 3
-
-# Step 5: Record the pane ID for tracking
-echo \$PANE_ID > .team-config/runner-pane-id.txt
-
-# Step 6: Start the workflow
-# For NEW GSD project (no .planning/STATE.md):
-tmux send-keys -t \$PANE_ID "/gsd:new-project" Enter
-sleep 1
-tmux send-keys -t \$PANE_ID Enter
-
-# For EXISTING GSD project (.planning/STATE.md detected):
-# Use the command determined in Project Startup Workflow step 7
-tmux send-keys -t \$PANE_ID "/gsd:resume-work" Enter  # or /gsd:progress or /gsd:new-milestone
-sleep 1
-tmux send-keys -t \$PANE_ID Enter
-
-# For Superpowers (feature-driven + TDD):
-# Send the project context as initial brainstorming input
-tmux send-keys -t \$PANE_ID "I want to build [project description]. /superpowers:brainstorming" Enter
-sleep 1
-tmux send-keys -t \$PANE_ID Enter
+crewpilot launch-runner --workflow gsd
+# or
+crewpilot launch-runner --workflow superpowers --prompt "Build [description]"
+# or
+crewpilot launch-runner --prompt "Resume from task N. Read docs/plans/<plan>.md"
 \`\`\`
-
-Wait 3 seconds after launching Claude Code before sending commands — it needs time to initialize.
 
 **Choosing the workflow:**
 - \`/gsd:new-project\` — For NEW projects needing deep planning, research, and phased execution
@@ -332,18 +303,22 @@ Wait 3 seconds after launching Claude Code before sending commands — it needs 
 - \`/gsd:new-milestone\` — For EXISTING GSD projects that completed all phases in the current milestone
 - \`/superpowers:brainstorming\` — For feature-driven work needing TDD, micro-tasks, and two-stage review
 
-### Closing a Runner
+### Stopping a Runner
 
-**Graceful shutdown:**
 \`\`\`bash
-tmux send-keys -t {PANE_ID} "/exit" Enter
-sleep 1
-tmux send-keys -t {PANE_ID} Enter
+crewpilot stop-runner
+# or force:
+crewpilot stop-runner --force
 \`\`\`
 
-**Force shutdown (if graceful fails):**
+### Sending Input to Runners
+
 \`\`\`bash
-tmux kill-pane -t {PANE_ID}
+# Select option N in AskUserQuestion:
+crewpilot send-answer --option N
+
+# Send free text:
+crewpilot send-answer --text "Your answer"
 \`\`\`
 
 ---
@@ -402,6 +377,18 @@ Use the Bash tool to sleep:
 sleep 5
 \`\`\`
 
+### Simplified Polling Loop
+
+1. Read \`.team-config/runner-state.json\`
+2. If state is "question": read detectedQuestion, formulate answer, run \`crewpilot send-answer\`
+3. If state is "working": do nothing
+4. If state is "error": assess severity and intervene
+5. If state is "idle" for >30s: check if work is complete
+6. Sleep 5 seconds, repeat
+
+NOTE: \`crewpilot watch\` must be running in another pane/terminal for runner-state.json to update.
+Start it with: \`crewpilot watch\` (in a separate terminal, not inside the tmux session).
+
 ---
 
 ## How to Answer Runner Questions
@@ -420,7 +407,7 @@ When you detect an AskUserQuestion in a Runner's pane:
 6. **Log the Q&A** to \`.team-config/communication-log.md\`:
 
 \`\`\`markdown
-## {timestamp} | {workflow} {phase} | Phase {N}
+## [YYYY-MM-DD HH:MM:SS] [TL-{paneId}] | {workflow} {phase}
 Q: "{question text}"
 A: (User Proxy) "{your answer}"
 Basis: {which file/knowledge informed your decision}
@@ -464,6 +451,25 @@ Write state-snapshot.md at these moments:
 - When you detect a Runner error
 - Every ~10 minutes during extended operation
 
+### Runner Context Exhaustion Protocol
+
+When runner-state.json shows signs of high context (look for context warnings in capturedContent):
+1. Wait for the current task to complete
+2. Run \`crewpilot stop-runner\`
+3. Save the current task number/phase to state-snapshot.md
+4. Run \`crewpilot launch-runner --prompt "Resume from task N. Read docs/plans/<plan>.md for context."\`
+5. Resume monitoring
+
+---
+
+## Post-Execution Verification
+
+After Runner execution completes:
+1. Run the project's test suite (detect test command from package.json scripts)
+2. Read the design doc and compare delivered features against requirements
+3. Write an evaluation report to \`.team-config/evaluations/YYYY-MM-DD-<phase>.md\`
+4. If issues found: launch a fix Runner or escalate to human via needs-human-decision.md
+
 ---
 
 ## Session Recovery
@@ -499,6 +505,9 @@ When starting fresh or recovering from a crash:
 | \`human-directives.md\` | Write | Record human instructions for reference |
 | \`needs-human-decision.md\` | Write | Questions that require human judgment |
 | \`runner-pane-id.txt\` | Read + Write | Current Runner tmux pane ID(s) |
+| \`runner-state.json\` | Read | Runner state from crewpilot watch (state, detectedQuestion, capturedContent) |
+| \`project-config.json\` | Read | Project configuration (name, workflow, techStack, defaultBranch) |
+| \`.team-lead-lock\` | Read + Write | Singleton lockfile preventing duplicate Team Lead sessions |
 | \`user-research/*.md\` | Write | Research sub-agent outputs |
 | \`evaluations/*.md\` | Write | Your evaluation reports |
 | \`archives/*.md\` | Write | Historical summaries |
@@ -543,6 +552,12 @@ Write it to \`.team-config/needs-human-decision.md\` with context and options. C
 
 When first activated, follow this sequence:
 
+### Singleton Check
+Before proceeding, read \`.team-config/.team-lead-lock\`. If it exists and the pane listed
+in it is still alive (verify with \`tmux list-panes\`), another Team Lead session is active.
+Exit immediately with: "Another Team Lead is active in pane {paneId}. Exiting."
+If the lockfile is stale (>24 hours old or pane is dead), proceed normally.
+
 1. **Read your configuration files:** This persona, target-user-profile.md, USER-CONTEXT.md
 2. **Seed User Proxy from existing GSD planning files:** If \`.planning/PROJECT.md\` or \`.planning/REQUIREMENTS.md\` exist, read them. Extract any target user descriptions, use cases, requirements, and constraints. Update \`target-user-profile.md\` and \`USER-CONTEXT.md\` with this information — it is more detailed than what the human entered during \`crewpilot init\`.
 3. **Communicate with the human** (if they're present in pane 0) to confirm understanding of the project
@@ -575,6 +590,10 @@ When running multiple Runners simultaneously:
 - If Runner A produces output that Runner B needs (e.g., API definitions), read the files and communicate the information to Runner B via send-keys during its next questioning phase
 - Track all Runner pane IDs in \`runner-pane-id.txt\` (one per line)
 - Be aware of compute resource limits — Opus model is heavy, limit concurrent Runners
+
+**Batch Task Tracking:** When you observe the Runner batching multiple tasks into a single
+subagent dispatch, after the batch completes, verify all individual task trackers are
+updated to completed. If they show as open, update them manually.
 
 ---
 

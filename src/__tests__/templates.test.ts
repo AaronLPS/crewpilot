@@ -27,7 +27,7 @@ describe('teamLeadPersonaTemplate', () => {
     const result = teamLeadPersonaTemplate()
     expect(result).toContain('capture-pane')
     expect(result).toContain('send-keys')
-    expect(result).toContain('split-window')
+    expect(result).toContain('tmux list-panes')
   })
 
   it('contains polling loop instructions', () => {
@@ -85,6 +85,39 @@ describe('teamLeadPersonaTemplate', () => {
     expect(result).toContain('communication-log.md')
     expect(result).toContain('human-inbox.md')
     expect(result).toContain('session-recovery.md')
+  })
+
+  it('includes singleton check section', () => {
+    const persona = teamLeadPersonaTemplate()
+    expect(persona).toContain('Singleton Check')
+    expect(persona).toContain('.team-lead-lock')
+  })
+
+  it('includes CLI commands instead of raw tmux', () => {
+    const persona = teamLeadPersonaTemplate()
+    expect(persona).toContain('crewpilot launch-runner')
+    expect(persona).toContain('crewpilot stop-runner')
+    expect(persona).toContain('crewpilot send-answer')
+  })
+
+  it('includes context exhaustion protocol', () => {
+    const persona = teamLeadPersonaTemplate()
+    expect(persona).toContain('Context Exhaustion Protocol')
+  })
+
+  it('includes post-execution verification', () => {
+    const persona = teamLeadPersonaTemplate()
+    expect(persona).toContain('Post-Execution Verification')
+  })
+
+  it('includes runner-state.json reference', () => {
+    const persona = teamLeadPersonaTemplate()
+    expect(persona).toContain('runner-state.json')
+  })
+
+  it('includes communication log format with instance ID', () => {
+    const persona = teamLeadPersonaTemplate()
+    expect(persona).toContain('[TL-')
   })
 })
 
