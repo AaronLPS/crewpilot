@@ -12,6 +12,7 @@ import { runMonitor } from './commands/monitor.js'
 import { runExport } from './commands/export.js'
 import { runLaunchRunner } from './commands/launch-runner.js'
 import { runStopRunner } from './commands/stop-runner.js'
+import { runSendAnswer } from './commands/send-answer.js'
 
 const program = new Command()
 
@@ -244,6 +245,20 @@ program
   .action((opts) => {
     try {
       runStopRunner({ force: opts.force })
+    } catch (err: any) {
+      console.error(err.message)
+      process.exit(1)
+    }
+  })
+
+program
+  .command('send-answer')
+  .description('Send input to the active Runner (option selection or free text)')
+  .option('--option <n>', 'Select option number N in AskUserQuestion', parseInt)
+  .option('--text <text>', 'Send free text input')
+  .action((opts) => {
+    try {
+      runSendAnswer({ option: opts.option, text: opts.text })
     } catch (err: any) {
       console.error(err.message)
       process.exit(1)
