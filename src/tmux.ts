@@ -72,5 +72,9 @@ export function attachSession(name: string): void {
 }
 
 export function sleepMs(ms: number): void {
-  spawnSync('sleep', [String(ms / 1000)])
+  const start = Date.now()
+  while (Date.now() - start < ms) {
+    // Busy wait for cross-platform compatibility
+    // This avoids spawning a process and works on all platforms
+  }
 }

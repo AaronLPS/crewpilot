@@ -16,21 +16,21 @@ vi.mock('../../tmux.js', () => ({
   createSession: vi.fn(),
   sendKeys: vi.fn(),
   sendEnter: vi.fn(),
-  sendTextInput: vi.fn(),
   attachSession: vi.fn(),
   sleepMs: vi.fn(),
 }))
 
 import { confirm } from '@inquirer/prompts'
-import { sessionExists, createSession, sendKeys, sendTextInput, attachSession } from '../../tmux.js'
+import { sessionExists, createSession, sendKeys, sendEnter, attachSession, sleepMs } from '../../tmux.js'
 import { runStart } from '../../commands/start.js'
 
 const mockConfirm = vi.mocked(confirm)
 const mockSessionExists = vi.mocked(sessionExists)
 const mockCreateSession = vi.mocked(createSession)
 const mockSendKeys = vi.mocked(sendKeys)
-const mockSendTextInput = vi.mocked(sendTextInput)
+const mockSendEnter = vi.mocked(sendEnter)
 const mockAttachSession = vi.mocked(attachSession)
+const mockSleepMs = vi.mocked(sleepMs)
 
 describe('runStart', () => {
   let tmpDir: string
@@ -62,7 +62,8 @@ describe('runStart', () => {
 
     expect(mockCreateSession).toHaveBeenCalledWith('crewpilot-testapp', tmpDir)
     expect(mockSendKeys).toHaveBeenCalled()
-    expect(mockSendTextInput).toHaveBeenCalled()
+    expect(mockSendEnter).toHaveBeenCalled()
+    expect(mockSleepMs).toHaveBeenCalled()
   })
 
   it('exits early if user declines the permissions warning', async () => {

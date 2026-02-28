@@ -19,7 +19,15 @@ export function runFeedback(message: string, cwd?: string): void {
     throw new Error(`Feedback message too long (${message.length} chars). Maximum is ${MAX_FEEDBACK_LENGTH}.`)
   }
 
-  const normalized = message.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const trimmed = message.trim()
+  if (trimmed.length === 0) {
+    throw new Error('Feedback message cannot be empty.')
+  }
+  if (trimmed.length < 3) {
+    throw new Error('Feedback message must be at least 3 characters.')
+  }
+
+  const normalized = trimmed.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
   const sanitized = normalized.replace(/^#{1,6}\s*/gm, '')
 
   const inboxPath = path.join(dir, '.team-config', 'human-inbox.md')

@@ -20,6 +20,11 @@ CLAUDE.md
 npm-debug.log*
 yarn-error.log*
 
+# Session artifacts (AI-generated working notes)
+SUMMARY.md
+IMPROVEMENTS.md
+TESTING.md
+
 # OS artifacts
 .DS_Store
 Thumbs.db

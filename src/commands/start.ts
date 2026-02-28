@@ -10,7 +10,6 @@ import {
   createSession,
   sendKeys,
   sendEnter,
-  sendTextInput,
   attachSession,
   sleepMs,
 } from '../tmux.js'
@@ -80,7 +79,10 @@ export async function runStart(options: StartOptions = {}): Promise<void> {
   sendEnter(`${sessionName}:0`)
   sleepMs(4000)
 
-  sendTextInput(`${sessionName}:0`, BOOTSTRAP_PROMPT)
+  // Send bootstrap prompt - single Enter for initial prompt
+  sendKeys(`${sessionName}:0`, BOOTSTRAP_PROMPT)
+  sleepMs(500)
+  sendEnter(`${sessionName}:0`)
 
   console.log(chalk.green(`\nCrewpilot started! Session: ${sessionName}`))
   console.log('')

@@ -46,6 +46,26 @@ describe('runFeedback', () => {
     expect(() => runFeedback(longMessage, tmpDir)).toThrow(/too long/)
   })
 
+  it('rejects empty messages', () => {
+    expect(() => runFeedback('', tmpDir)).toThrow(/cannot be empty/)
+    expect(() => runFeedback('   ', tmpDir)).toThrow(/cannot be empty/)
+    expect(() => runFeedback('\n\t  ', tmpDir)).toThrow(/cannot be empty/)
+  })
+
+  it('rejects messages shorter than 3 characters', () => {
+    expect(() => runFeedback('ab', tmpDir)).toThrow(/at least 3 characters/)
+    expect(() => runFeedback('  a  ', tmpDir)).toThrow(/at least 3 characters/)
+  })
+
+  it('accepts messages with 3 or more characters after trimming', () => {
+    runFeedback('abc', tmpDir)
+    const content = fs.readFileSync(
+      path.join(tmpDir, '.team-config', 'human-inbox.md'),
+      'utf-8'
+    )
+    expect(content).toContain('abc')
+  })
+
   it('strips all markdown heading levels from message body', () => {
     runFeedback('# H1 heading\n## H2 heading\n### H3 heading\nPlain text', tmpDir)
 

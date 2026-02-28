@@ -23,34 +23,43 @@ export function scaffoldTeamConfig(projectDir: string, input: ScaffoldInput): vo
 
   try {
     fs.mkdirSync(configDir, { recursive: true })
+  } catch (err: any) {
+    throw new Error(`Failed to create .team-config/: ${err.message}`)
+  }
+
+  try {
     fs.mkdirSync(path.join(configDir, 'user-research'), { recursive: true })
     fs.mkdirSync(path.join(configDir, 'evaluations'), { recursive: true })
     fs.mkdirSync(path.join(configDir, 'archives'), { recursive: true })
+  } catch (err: any) {
+    throw new Error(`Failed to create subdirectories: ${err.message}`)
+  }
 
-    const files: Record<string, string> = {
-      'team-lead-persona.md': teamLeadPersonaTemplate(),
-      'target-user-profile.md': targetUserProfileTemplate({ description: input.userDescription }),
-      'USER-CONTEXT.md': userContextTemplate({
-        projectName: input.projectName,
-        description: input.description,
-        techStack: input.techStack,
-        workflow: input.workflow,
-      }),
-      'project-context.md': projectContextTemplate(),
-      'session-recovery.md': sessionRecoveryTemplate(),
-      'state-snapshot.md': '',
-      'communication-log.md': communicationLogTemplate(),
-      'human-inbox.md': humanInboxTemplate(),
-      'human-directives.md': '',
-      'needs-human-decision.md': '',
-      'runner-pane-id.txt': '',
-    }
+  const files: Record<string, string> = {
+    'team-lead-persona.md': teamLeadPersonaTemplate(),
+    'target-user-profile.md': targetUserProfileTemplate({ description: input.userDescription }),
+    'USER-CONTEXT.md': userContextTemplate({
+      projectName: input.projectName,
+      description: input.description,
+      techStack: input.techStack,
+      workflow: input.workflow,
+    }),
+    'project-context.md': projectContextTemplate(),
+    'session-recovery.md': sessionRecoveryTemplate(),
+    'state-snapshot.md': '',
+    'communication-log.md': communicationLogTemplate(),
+    'human-inbox.md': humanInboxTemplate(),
+    'human-directives.md': '',
+    'needs-human-decision.md': '',
+    'runner-pane-id.txt': '',
+  }
 
+  try {
     for (const [filename, content] of Object.entries(files)) {
       fs.writeFileSync(path.join(configDir, filename), content, 'utf-8')
     }
-  } catch {
-    throw new Error('Failed to create .team-config/. Check directory permissions.')
+  } catch (err: any) {
+    throw new Error(`Failed to write config files: ${err.message}`)
   }
 }
 
@@ -66,7 +75,7 @@ export function appendClaudeMd(projectDir: string, content: string): void {
     } else {
       fs.writeFileSync(claudeMdPath, content, 'utf-8')
     }
-  } catch {
-    throw new Error('Failed to write CLAUDE.md. Check directory permissions.')
+  } catch (err: any) {
+    throw new Error(`Failed to write CLAUDE.md: ${err.message}`)
   }
 }

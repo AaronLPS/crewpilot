@@ -5,6 +5,7 @@ import { checkPrereqs } from '../prereqs.js'
 import { scaffoldTeamConfig, teamConfigExists, appendClaudeMd } from '../scaffold.js'
 import { claudeMdAppend } from '../templates.js'
 import { execFileSync } from 'node:child_process'
+import { sanitizeSessionName } from '../utils.js'
 
 interface InitOptions {
   cwd?: string
@@ -49,6 +50,12 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     message: 'Project name',
     default: path.basename(cwd),
   }))
+
+  const sanitizedName = sanitizeSessionName(projectName)
+  const originalNameLower = projectName.toLowerCase().replace(/\s+/g, '-')
+  if (sanitizedName !== originalNameLower.slice(0, 64).replace(/-$/, '')) {
+    console.log(chalk.yellow(`Note: Session name sanitized to "crewpilot-${sanitizedName}"`))
+  }
 
   const description = sanitizeField(options.description ?? await input({
     message: 'Project description',
@@ -98,8 +105,14 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
       const contextPath = path.join(cwd, '.team-config', 'project-context.md')
       writeFileSync(contextPath, `# Project Context\n\n${analysis}`, 'utf-8')
       console.log(chalk.green('Codebase analysis written to .team-config/project-context.md'))
-    } catch {
-      console.log(chalk.yellow('Codebase scan failed. You can fill in project-context.md manually.'))
+    } catch (err: any) {
+      if (err.message?.includes('ENOENT') || err.message?.includes('spawn')) {
+        console.log(chalk.yellow('Claude Code not found. Install with: npm install -g @anthropic-ai/claude-code'))
+      } else if (err.message?.includes('timeout')) {
+        console.log(chalk.yellow('Codebase scan timed out after 60 seconds. You can fill in project-context.md manually.'))
+      } else {
+        console.log(chalk.yellow(`Codebase scan failed: ${err.message}. You can fill in project-context.md manually.`))
+      }
     }
   }
 
