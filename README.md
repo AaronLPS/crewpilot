@@ -95,11 +95,11 @@ crewpilot resume
 crewpilot stop
 ```
 
-## Existing Projects
+## Using Crewpilot With Existing Projects
 
-Crewpilot works with existing codebases, including projects that already have a GSD workflow in progress.
+### First time — project not yet initialized
 
-### Any existing project
+If your project doesn't have a `.team-config/` directory yet:
 
 ```bash
 cd /path/to/your/project
@@ -107,26 +107,62 @@ crewpilot init --existing
 crewpilot start
 ```
 
-The `--existing` flag scans your codebase with Claude Code and writes an architecture summary to `.team-config/project-context.md`. Your existing `CLAUDE.md` is appended to, not overwritten.
+The `--existing` flag scans your codebase and writes an architecture summary to `.team-config/project-context.md`. Your existing `CLAUDE.md` is appended to, not overwritten.
+
+### Coming back — project already initialized
+
+If you've used Crewpilot before (`.team-config/` already exists), skip `init` entirely.
+
+**Add a new feature:**
+
+```bash
+cd /path/to/your/project
+
+# Option A: describe the feature upfront
+crewpilot feedback "Add user authentication with OAuth2 and Google sign-in"
+crewpilot start
+
+# Option B: start first, describe interactively
+crewpilot start
+# then describe your feature in the tmux session
+```
+
+**Resume interrupted work:**
+
+```bash
+crewpilot resume              # reattach to existing session or restore state
+crewpilot resume --fresh      # new conversation, reads saved state files
+```
+
+**Check where things stand before deciding:**
+
+```bash
+crewpilot status              # shows last state, progress, pending decisions
+```
 
 ### Existing GSD project
 
-If your project already has `.planning/STATE.md` from a previous GSD session, the Team Lead detects it at startup. It reads your GSD state, summarizes what it found (current phase, progress, remaining work), and asks you what to do:
+If your project has `.planning/STATE.md` from a previous GSD session, the Team Lead detects it at startup, summarizes progress, and asks what to do:
 
-| Option | GSD command |
+| What you want | What happens |
 |---|---|
-| Resume where you left off | `/gsd:resume-work` |
-| Review roadmap and reprioritize | `/gsd:progress` |
-| Start a new milestone with different goals | `/gsd:new-milestone` |
-| Insert urgent work before the next phase | `/gsd:insert-phase` |
-| Ignore existing state and start fresh | `/gsd:new-project` |
-| Switch to Superpowers workflow instead | `/superpowers:brainstorming` |
+| Continue where you left off | Team Lead uses `/gsd:resume-work` |
+| Add a new feature as a new milestone | Team Lead uses `/gsd:new-milestone` |
+| Squeeze in urgent work before the next phase | Team Lead uses `/gsd:insert-phase` |
+| Review the roadmap and reprioritize | Team Lead uses `/gsd:progress` |
+| Scrap everything and start over | Team Lead uses `/gsd:new-project` |
+| Switch to Superpowers (TDD-focused) | Team Lead uses `/superpowers:brainstorming` |
+
+### Updating requirements mid-session
+
+You can steer the Team Lead at any time without entering tmux:
 
 ```bash
-cd /path/to/your/gsd-project
-crewpilot init --existing --workflow gsd
-crewpilot start
+crewpilot feedback "use PostgreSQL instead of SQLite"
+crewpilot feedback "skip the admin panel for now, focus on the API"
 ```
+
+Or edit `.team-config/human-inbox.md` directly — the Team Lead checks it every polling cycle.
 
 ## Commands
 
