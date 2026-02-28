@@ -71,6 +71,15 @@ export function sendTextInput(paneId: string, text: string): void {
   tmux('send-keys', '-t', paneId, 'Enter')
 }
 
+export function sendOption(paneId: string, optionNumber: number): void {
+  if (optionNumber < 1) throw new Error('Option number must be >= 1')
+  for (let i = 1; i < optionNumber; i++) {
+    tmux('send-keys', '-t', paneId, 'Down')
+    sleepMs(500)
+  }
+  tmux('send-keys', '-t', paneId, 'Enter')
+}
+
 export function attachSession(name: string): void {
   spawnSync('tmux', ['attach-session', '-t', name], { stdio: 'inherit' })
 }
