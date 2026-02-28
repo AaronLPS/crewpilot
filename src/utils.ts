@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { execFileSync } from 'node:child_process'
 
 export function getProjectName(userContextContent: string): string | null {
   const match = userContextContent.match(/^## Project Name\n(.+)$/m)
@@ -23,4 +24,15 @@ export function sanitizeSessionName(name: string): string {
 
 export function getSessionName(projectName: string): string {
   return `crewpilot-${sanitizeSessionName(projectName)}`
+}
+
+export function getDefaultBranch(cwd: string): string {
+  try {
+    return execFileSync('git', ['symbolic-ref', '--short', 'HEAD'], {
+      cwd,
+      stdio: 'pipe',
+    }).toString().trim()
+  } catch {
+    return 'master'
+  }
 }

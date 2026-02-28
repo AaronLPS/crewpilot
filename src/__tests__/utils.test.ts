@@ -1,5 +1,11 @@
-import { describe, it, expect } from 'vitest'
-import { getProjectName, getTeamConfigDir, formatTimestamp, sanitizeSessionName, getSessionName } from '../utils.js'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { getProjectName, getTeamConfigDir, formatTimestamp, sanitizeSessionName, getSessionName, getDefaultBranch } from '../utils.js'
+import { execFileSync } from 'node:child_process'
+
+vi.mock('node:child_process', () => ({
+  execFileSync: vi.fn(),
+}))
+const mockExecFileSync = vi.mocked(execFileSync)
 
 describe('getProjectName', () => {
   it('reads project name from USER-CONTEXT.md content', () => {
@@ -49,5 +55,28 @@ describe('sanitizeSessionName', () => {
 describe('getSessionName', () => {
   it('prefixes with crewpilot-', () => {
     expect(getSessionName('MyApp')).toBe('crewpilot-myapp')
+  })
+})
+
+describe('getDefaultBranch', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns current branch from git symbolic-ref', () => {
+    mockExecFileSync.mockReturnValueOnce(Buffer.from('main\n'))
+    expect(getDefaultBranch('/tmp/test')).toBe('main')
+  })
+
+  it('returns master as fallback if git fails', () => {
+    mockExecFileSync.mockImplementation(() => {
+      throw new Error('not a git repo')
+    })
+    expect(getDefaultBranch('/tmp/test')).toBe('master')
+  })
+
+  it('trims whitespace from branch name', () => {
+    mockExecFileSync.mockReturnValueOnce(Buffer.from('  develop  \n'))
+    expect(getDefaultBranch('/tmp/test')).toBe('develop')
   })
 })
