@@ -361,13 +361,94 @@ describe('runWatch', () => {
     mockSessionExists.mockReturnValue(true)
     mockListPanes.mockReturnValue([{ id: '%0', active: true, command: 'claude' }])
     mockCapturePaneContent.mockReturnValue('Error: Failed to compile\nTraceback: line 42')
-    
+
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     const clearSpy = vi.spyOn(console, 'clear').mockImplementation(() => {})
-    
+
     await runWatch({ cwd: tmpDir, once: true })
-    
+
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error'))
+    clearSpy.mockRestore()
+    consoleSpy.mockRestore()
+  })
+})
+
+describe('state file writing', () => {
+  let tmpDir: string
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crewpilot-watch-state-'))
+    const configDir = path.join(tmpDir, '.team-config')
+    fs.mkdirSync(configDir, { recursive: true })
+    fs.writeFileSync(
+      path.join(configDir, 'USER-CONTEXT.md'),
+      '# User Context\n\n## Project Name\nTestApp\n',
+      'utf-8'
+    )
+    fs.writeFileSync(path.join(configDir, 'runner-pane-id.txt'), '%5\n', 'utf-8')
+    vi.clearAllMocks()
+    mockTeamConfigExists.mockReturnValue(true)
+    mockSessionExists.mockReturnValue(true)
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true })
+  })
+
+  it('writes runner-state.json during watch cycle', async () => {
+    mockListPanes.mockReturnValue([{ id: '%5', active: true, command: 'claude' }])
+    mockCapturePaneContent.mockReturnValue('⏳ Thinking...\n❯')
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const clearSpy = vi.spyOn(console, 'clear').mockImplementation(() => {})
+
+    await runWatch({ cwd: tmpDir, once: true, notify: 'log' })
+
+    const statePath = path.join(tmpDir, '.team-config', 'runner-state.json')
+    expect(fs.existsSync(statePath)).toBe(true)
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'))
+    expect(state.paneId).toBe('%5')
+    expect(state.state).toBe('working')
+    expect(state.timestamp).toBeDefined()
+
+    clearSpy.mockRestore()
+    consoleSpy.mockRestore()
+  })
+
+  it('extracts question details when question state detected', async () => {
+    mockListPanes.mockReturnValue([{ id: '%5', active: true, command: 'claude' }])
+    mockCapturePaneContent.mockReturnValue(
+      'Which database should we use?\n❯ 1. PostgreSQL\n  2. SQLite\n  3. MongoDB\nEnter to select · Tab/Arrow keys to navigate'
+    )
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const clearSpy = vi.spyOn(console, 'clear').mockImplementation(() => {})
+
+    await runWatch({ cwd: tmpDir, once: true, notify: 'log' })
+
+    const statePath = path.join(tmpDir, '.team-config', 'runner-state.json')
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'))
+    expect(state.state).toBe('question')
+    expect(state.detectedQuestion).toBeDefined()
+
+    clearSpy.mockRestore()
+    consoleSpy.mockRestore()
+  })
+
+  it('appends to runner-events.log on state transition', async () => {
+    mockListPanes.mockReturnValue([{ id: '%5', active: true, command: 'claude' }])
+    mockCapturePaneContent.mockReturnValue('Error: connection refused\nfailed to start\n$')
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const clearSpy = vi.spyOn(console, 'clear').mockImplementation(() => {})
+
+    await runWatch({ cwd: tmpDir, once: true, notify: 'log' })
+
+    const eventsPath = path.join(tmpDir, '.team-config', 'runner-events.log')
+    expect(fs.existsSync(eventsPath)).toBe(true)
+    const content = fs.readFileSync(eventsPath, 'utf-8')
+    expect(content).toContain('error')
+
     clearSpy.mockRestore()
     consoleSpy.mockRestore()
   })

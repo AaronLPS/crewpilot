@@ -22,6 +22,30 @@ interface RunnerState {
   lastActivity: Date
   idleDurationMs?: number
   confidence: number // 0-1 confidence in state detection
+  rawContent: string // Raw captured pane content for state file writing
+}
+
+/**
+ * Detected question from runner pane content
+ */
+interface DetectedQuestion {
+  text: string
+  options: string[]
+  type: 'multiple_choice' | 'free_text'
+}
+
+/**
+ * State file written to .team-config/runner-state.json
+ */
+interface RunnerStateFile {
+  paneId: string
+  state: RunnerState['state']
+  confidence: number
+  timestamp: string
+  idleSince: string | null
+  capturedContent: string
+  detectedQuestion: DetectedQuestion | null
+  details: string | undefined
 }
 
 /**
@@ -325,6 +349,99 @@ function extractLastMeaningfulLine(lines: string[]): string {
 }
 
 /**
+ * Extract question text and options from captured pane content
+ */
+function extractQuestion(content: string): DetectedQuestion | null {
+  const lines = content.split('\n')
+  const options: string[] = []
+  let firstOptionIndex = -1
+
+  for (let i = 0; i < lines.length; i++) {
+    const optionMatch = lines[i].match(/^[❯\s]*\d+\.\s+(.+)/)
+    if (optionMatch) {
+      if (firstOptionIndex === -1) firstOptionIndex = i
+      options.push(optionMatch[1].trim())
+    }
+  }
+
+  if (options.length > 0 && firstOptionIndex > 0) {
+    // Question text is the line before the first option
+    const questionText = lines[firstOptionIndex - 1].trim()
+    return {
+      text: questionText,
+      options,
+      type: 'multiple_choice',
+    }
+  }
+
+  // Check for free-text question patterns
+  const questionLine = lines.find(l => l.trim().endsWith('?'))
+  if (questionLine) {
+    return {
+      text: questionLine.trim(),
+      options: [],
+      type: 'free_text',
+    }
+  }
+
+  return null
+}
+
+/**
+ * Write runner state to .team-config/runner-state.json
+ */
+function writeRunnerState(cwd: string, state: RunnerState, content: string): void {
+  const configDir = path.join(cwd, '.team-config')
+  const statePath = path.join(configDir, 'runner-state.json')
+
+  let detectedQuestion: DetectedQuestion | null = null
+  if (state.state === 'question') {
+    detectedQuestion = extractQuestion(content)
+  }
+
+  const stateFile: RunnerStateFile = {
+    paneId: state.paneId,
+    state: state.state,
+    confidence: state.confidence,
+    timestamp: new Date().toISOString(),
+    idleSince: state.idleDurationMs && state.idleDurationMs > 0
+      ? new Date(Date.now() - state.idleDurationMs).toISOString()
+      : null,
+    capturedContent: content,
+    detectedQuestion,
+    details: state.details,
+  }
+
+  try {
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true })
+    }
+    fs.writeFileSync(statePath, JSON.stringify(stateFile, null, 2), 'utf-8')
+  } catch {
+    // Silently fail - state file writing should not break watch
+  }
+}
+
+/**
+ * Append event to .team-config/runner-events.log
+ */
+function appendRunnerEvent(cwd: string, event: string, paneId: string): void {
+  const configDir = path.join(cwd, '.team-config')
+  const eventsPath = path.join(configDir, 'runner-events.log')
+  const timestamp = new Date().toISOString()
+  const logEntry = `[${timestamp}] pane=${paneId} event=${event}\n`
+
+  try {
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true })
+    }
+    fs.appendFileSync(eventsPath, logEntry)
+  } catch {
+    // Silently fail - event logging should not break watch
+  }
+}
+
+/**
  * Calculate idle duration by comparing with previous content
  */
 function calculateIdleDuration(
@@ -397,6 +514,7 @@ function getRunnerStates(
       lastActivity: new Date(),
       idleDurationMs,
       confidence: detection.confidence,
+      rawContent: content,
     })
   }
 
@@ -581,6 +699,14 @@ export async function runWatch(options: WatchOptions = {}): Promise<void> {
           if (prevState?.state === 'question' && state.state !== 'question') {
             notifiedQuestions.delete(state.paneId)
           }
+        }
+
+        // Write state file for each pane
+        writeRunnerState(cwd, state, state.rawContent)
+
+        // Append event log on state transitions
+        if (changed || isNew) {
+          appendRunnerEvent(cwd, state.state, state.paneId)
         }
 
         previousStates.set(state.paneId, state)
