@@ -10,15 +10,21 @@ vi.mock('@inquirer/prompts', () => ({
   confirm: vi.fn(),
 }))
 
+vi.mock('node:child_process', () => ({
+  execFileSync: vi.fn(),
+}))
+
 vi.mock('../../prereqs.js', () => ({
   checkPrereqs: vi.fn(),
 }))
 
 import { input, select, confirm } from '@inquirer/prompts'
+import { execFileSync } from 'node:child_process'
 
 const mockInput = vi.mocked(input)
 const mockSelect = vi.mocked(select)
 const mockConfirm = vi.mocked(confirm)
+const mockExecFileSync = vi.mocked(execFileSync)
 
 describe('runInit', () => {
   let tmpDir: string
@@ -187,5 +193,43 @@ describe('runInit', () => {
     expect(content).toContain('Automated project')
     expect(content).toContain('Rust')
     expect(content).toContain('superpowers')
+  })
+
+  it('writes project-config.json with default branch', async () => {
+    mockExecFileSync.mockReturnValueOnce(Buffer.from('main\n'))
+
+    await runInit({
+      cwd: tmpDir,
+      name: 'Test',
+      description: 'Test',
+      user: 'devs',
+      tech: 'Node',
+      workflow: 'gsd',
+    })
+
+    const configPath = path.join(tmpDir, '.team-config', 'project-config.json')
+    expect(fs.existsSync(configPath)).toBe(true)
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+    expect(config.defaultBranch).toBe('main')
+  })
+
+  it('falls back to master when git branch detection fails', async () => {
+    mockExecFileSync.mockImplementationOnce(() => {
+      throw new Error('not a git repo')
+    })
+
+    await runInit({
+      cwd: tmpDir,
+      name: 'Test',
+      description: 'Test',
+      user: 'devs',
+      tech: 'Node',
+      workflow: 'gsd',
+    })
+
+    const configPath = path.join(tmpDir, '.team-config', 'project-config.json')
+    expect(fs.existsSync(configPath)).toBe(true)
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+    expect(config.defaultBranch).toBe('master')
   })
 })

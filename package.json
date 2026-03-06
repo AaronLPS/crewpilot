@@ -1,6 +1,6 @@
 {
   "name": "crewpilot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI tool that bootstraps and manages an AI Agent Team framework on top of Claude Code",
   "type": "module",
   "bin": {

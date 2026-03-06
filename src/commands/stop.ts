@@ -3,7 +3,7 @@ import path from 'node:path'
 import chalk from 'chalk'
 import { checkPrereqs } from '../prereqs.js'
 import { teamConfigExists } from '../scaffold.js'
-import { getProjectName, getSessionName } from '../utils.js'
+import { getProjectName, getSessionName, removeLockfile } from '../utils.js'
 import {
   sessionExists,
   killSession,
@@ -107,6 +107,10 @@ export function runStop(cwd?: string): void {
   } catch {
     // Already dead
   }
+
+  // Clean up lockfiles
+  removeLockfile(dir, '.team-lead-lock')
+  removeLockfile(dir, '.runner-lock')
 
   console.log(chalk.green(`\nCrewpilot stopped. State preserved in .team-config/`))
   console.log(chalk.gray(`Use ${chalk.cyan('crewpilot resume')} to continue later.`))

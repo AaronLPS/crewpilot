@@ -61,9 +61,22 @@ export function splitWindowHorizontal(session: string): string {
   return tmux('display-message', '-p', '-t', `${session}:{last}`, '#{pane_id}').trim()
 }
 
+export function createWindow(session: string): string {
+  return tmux('new-window', '-d', '-t', session, '-P', '-F', '#{pane_id}').trim()
+}
+
 export function sendTextInput(paneId: string, text: string): void {
   tmux('send-keys', '-t', paneId, text, 'Enter')
   sleepMs(1000)
+  tmux('send-keys', '-t', paneId, 'Enter')
+}
+
+export function sendOption(paneId: string, optionNumber: number): void {
+  if (optionNumber < 1) throw new Error('Option number must be >= 1')
+  for (let i = 1; i < optionNumber; i++) {
+    tmux('send-keys', '-t', paneId, 'Down')
+    sleepMs(500)
+  }
   tmux('send-keys', '-t', paneId, 'Enter')
 }
 

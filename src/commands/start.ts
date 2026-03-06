@@ -4,7 +4,7 @@ import chalk from 'chalk'
 import { confirm } from '@inquirer/prompts'
 import { checkPrereqs } from '../prereqs.js'
 import { teamConfigExists } from '../scaffold.js'
-import { getProjectName, getSessionName } from '../utils.js'
+import { getProjectName, getSessionName, writeLockfile } from '../utils.js'
 import {
   sessionExists,
   createSession,
@@ -74,6 +74,9 @@ export async function runStart(options: StartOptions = {}): Promise<void> {
   } catch {
     throw new Error(`Failed to create tmux session. Check that tmux is running and no duplicate session exists.`)
   }
+
+  // Write Team Lead lockfile for singleton check
+  writeLockfile(cwd, '.team-lead-lock', `${sessionName}:0`)
 
   sendKeys(`${sessionName}:0`, `claude --dangerously-skip-permissions`)
   sendEnter(`${sessionName}:0`)

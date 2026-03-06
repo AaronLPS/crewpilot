@@ -5,7 +5,7 @@ import { checkPrereqs } from '../prereqs.js'
 import { scaffoldTeamConfig, teamConfigExists, appendClaudeMd } from '../scaffold.js'
 import { claudeMdAppend } from '../templates.js'
 import { execFileSync } from 'node:child_process'
-import { sanitizeSessionName } from '../utils.js'
+import { sanitizeSessionName, getDefaultBranch } from '../utils.js'
 
 interface InitOptions {
   cwd?: string
@@ -78,12 +78,15 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     ],
   })
 
+  const defaultBranch = getDefaultBranch(cwd)
+
   scaffoldTeamConfig(cwd, {
     projectName,
     description,
     userDescription,
     techStack,
     workflow,
+    defaultBranch,
   })
 
   appendClaudeMd(cwd, claudeMdAppend())

@@ -94,4 +94,22 @@ describe('runStart', () => {
 
     expect(mockAttachSession).not.toHaveBeenCalled()
   })
+
+  it('writes team-lead lockfile after creating session', async () => {
+    const configDir = path.join(tmpDir, '.team-config')
+    fs.mkdirSync(configDir, { recursive: true })
+    fs.writeFileSync(
+      path.join(configDir, 'USER-CONTEXT.md'),
+      '# User Context\n\n## Project Name\nTestApp\n',
+      'utf-8'
+    )
+
+    await runStart({ cwd: tmpDir, noAttach: true })
+
+    const lockPath = path.join(tmpDir, '.team-config', '.team-lead-lock')
+    expect(fs.existsSync(lockPath)).toBe(true)
+    const lockData = JSON.parse(fs.readFileSync(lockPath, 'utf-8'))
+    expect(lockData.paneId).toBeDefined()
+    expect(lockData.startedAt).toBeDefined()
+  })
 })

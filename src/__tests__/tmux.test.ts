@@ -11,6 +11,8 @@ import {
   splitWindowHorizontal,
   sendTextInput,
   attachSession,
+  createWindow,
+  sendOption,
 } from '../tmux.js'
 
 vi.mock('node:child_process', () => ({
@@ -138,6 +140,20 @@ describe('tmux module', () => {
     })
   })
 
+  describe('createWindow', () => {
+    it('creates a detached window and returns pane ID', () => {
+      mockExecFileSync
+        .mockReturnValueOnce(Buffer.from('%3\n'))  // new-window with -P -F returns pane ID
+      const paneId = createWindow('crewpilot-myapp')
+      expect(paneId).toBe('%3')
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'tmux',
+        ['new-window', '-d', '-t', 'crewpilot-myapp', '-P', '-F', '#{pane_id}'],
+        expect.any(Object)
+      )
+    })
+  })
+
   describe('sendTextInput', () => {
     it('sends text with double Enter and sleep for Claude Code', () => {
       mockExecFileSync.mockReturnValue(Buffer.from(''))
@@ -163,6 +179,36 @@ describe('tmux module', () => {
         ['attach-session', '-t', 'crewpilot-myapp'],
         { stdio: 'inherit' }
       )
+    })
+  })
+
+  describe('sendOption', () => {
+    it('sends Enter for option 1 (default)', () => {
+      mockExecFileSync.mockReturnValue(Buffer.from(''))
+      sendOption('%1', 1)
+      const sendKeysCalls = mockExecFileSync.mock.calls.filter(
+        call => call[1] && (call[1] as string[])[0] === 'send-keys'
+      )
+      // Option 1 = just Enter (no Down presses)
+      expect(sendKeysCalls.length).toBe(1)
+      expect(sendKeysCalls[0][1]).toEqual(['send-keys', '-t', '%1', 'Enter'])
+    })
+
+    it('sends Down keys then Enter for option 3', () => {
+      mockExecFileSync.mockReturnValue(Buffer.from(''))
+      sendOption('%1', 3)
+      const sendKeysCalls = mockExecFileSync.mock.calls.filter(
+        call => call[1] && (call[1] as string[])[0] === 'send-keys'
+      )
+      // Option 3 = 2 Down presses + 1 Enter = 3 send-keys calls
+      expect(sendKeysCalls.length).toBe(3)
+      expect(sendKeysCalls[0][1]).toEqual(['send-keys', '-t', '%1', 'Down'])
+      expect(sendKeysCalls[1][1]).toEqual(['send-keys', '-t', '%1', 'Down'])
+      expect(sendKeysCalls[2][1]).toEqual(['send-keys', '-t', '%1', 'Enter'])
+    })
+
+    it('throws for option less than 1', () => {
+      expect(() => sendOption('%1', 0)).toThrow('Option number must be >= 1')
     })
   })
 })

@@ -122,6 +122,20 @@ describe('runStop', () => {
     warnSpy.mockRestore()
   })
 
+  it('removes team-lead and runner lockfiles on stop', () => {
+    const configDir = path.join(tmpDir, '.team-config')
+    fs.writeFileSync(path.join(configDir, '.team-lead-lock'), '{"paneId":"%0","pid":1234,"startedAt":"2026-01-01T00:00:00.000Z"}')
+    fs.writeFileSync(path.join(configDir, '.runner-lock'), '{"paneId":"%5","pid":5678,"startedAt":"2026-01-01T00:00:00.000Z"}')
+
+    mockSessionExists.mockReturnValue(true)
+    mockListPanes.mockReturnValue([])
+
+    runStop(tmpDir)
+
+    expect(fs.existsSync(path.join(configDir, '.team-lead-lock'))).toBe(false)
+    expect(fs.existsSync(path.join(configDir, '.runner-lock'))).toBe(false)
+  })
+
   it('kills session even without runner panes', () => {
     mockSessionExists.mockReturnValue(true)
     mockListPanes.mockReturnValue([
